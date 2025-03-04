@@ -1,0 +1,29 @@
+{
+    "chain_name": "novaichain",
+    "api": [
+        {
+            "address": "",
+            "provider": "Ping"
+        }
+    ],
+    "rpc": [
+        {
+           
+            "address": "http://127.0.0.1/rpcping",
+            "provider": "Ping"
+        }
+    ],
+    "sdk_version": "0.46.11",
+    "coin_type": "118",
+    "min_tx_fee": "800",
+    "assets": [{
+        "base": "NOVAI",
+        "symbol": "novai",
+        "exponent": "18",
+        "coingecko_id": "novai",
+        "logo": "https://ping.pub/logos/osmosis.jpg"
+    }],
+    "addr_prefix": "novaichain",
+    "theme_color": "#ce4747",
+    "logo": "https://becole.com/static/logo/logo_becole.png"
+}

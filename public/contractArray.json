@@ -1,0 +1,56 @@
+[
+
+    {
+        "chainOriginalId":7256,
+        "nativeCurrency":{
+            "name":"ChainConnect",
+            "addresses": "0xD5623e87466Ec6CcA12A7EB259Ae87B0490F0b72"
+        }
+    },
+
+    {
+        "chainOriginalId":7256,
+        "nativeCurrency":{
+            "name":"NovaiFaucet",
+            "addresses": "0x16BdAD6e3Dbb2f066bd5a5f5744FeB9B2335FB8B"
+        }
+    },
+    {
+        "chainOriginalId":7256,
+        "nativeCurrency":{
+            "name":"MinerRewardDistributor",
+            "addresses": "0x988Ee60ec3De0400D05F7De4707D4fB7a156171a"
+        }
+    },
+    {
+        "chainOriginalId":7256,
+        "nativeCurrency":{
+            "name":"nUSDT",
+            "addresses": "0xE623AED6b4dAf04553B8fEe8daECCF1cfaAece37"
+        }
+    },
+    {
+        "chainOriginalId":56,
+        "nativeCurrency":{
+            "name":"BNB-ChainConnect",
+            "addresses": "0xcc02c76bb2fb5064fbb76391cbebfc3fb96a2c45"
+        }
+    },
+    {
+        "chainOriginalId":137,
+        "nativeCurrency":{
+            "name":"Polygon",
+            "addresses": "0xea0909f3da3e58040e81e6a4bd1826caaacb9cad"
+        }
+    
+    },
+
+    {
+        "chainOriginalId":1,
+        "nativeCurrency":{
+            "name":"ETH-ChainConnect",
+            "addresses": "0x4e66a122f169443ead833b6b6567cc403a18dd95"
+        }
+    }
+ 
+]

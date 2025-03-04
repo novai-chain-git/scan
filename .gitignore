@@ -1,0 +1,9 @@
+node_modules/
+**/.vscode
+.yarn/
+yarn-error.log
+dist
+.idea
+*.zip
+.DS_Store
+.vite

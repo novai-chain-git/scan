@@ -1,0 +1,37 @@
+{
+  "id": "4734178",
+  "name": "浏览器",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "图标",
+  "glyphs": [
+    {
+      "icon_id": "29522765",
+      "name": "30B右双箭头",
+      "font_class": "a-30Byoushuangjiantou",
+      "unicode": "e68f",
+      "unicode_decimal": 59023
+    },
+    {
+      "icon_id": "23799570",
+      "name": "长箭头",
+      "font_class": "arrdown",
+      "unicode": "e91d",
+      "unicode_decimal": 59677
+    },
+    {
+      "icon_id": "34922409",
+      "name": "复制",
+      "font_class": "fuzhi",
+      "unicode": "e61d",
+      "unicode_decimal": 58909
+    },
+    {
+      "icon_id": "3427860",
+      "name": "链接",
+      "font_class": "icon-",
+      "unicode": "e620",
+      "unicode_decimal": 58912
+    }
+  ]
+}

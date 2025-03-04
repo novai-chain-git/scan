@@ -1,0 +1,25 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+# Indentation override for all JS under lib directory
+[*.{js,vue}]
+charset = utf-8
+indent_style = space
+indent_size = 2
+
+[*.css]
+charset = utf-8
+indent_style = space
+indent_size = 2
+
+# Matches the exact files either package.json
+[{package.json}]
+indent_style = space
+indent_size = 2
