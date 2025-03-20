@@ -24,11 +24,11 @@ function getDecimals(address: string, amount: any) {
     default:
       //所有eth链下的合约处理
       ethDecimals(address, amount).then(res => {
-        console.log(res, 'asd')
+        console.log(res, '')
       })
-      return 'asd';
+      return '';
   }
-  return 'asda'
+  return ''
 }
 
 // eth链处理
@@ -51,8 +51,11 @@ async function ethDecimals(address: string, amount: any): Promise<any> {
     <template v-if="type === 'value'">
 
       <template v-if="value.contractData.type">
-        
-        <template v-if="JudgingData(value.contractData.value.to, addresses.UniswapV2Router01)">
+        <template v-if="JudgingData(value.contractData.value.to , addresses.Bonstake)">
+
+          <Decimals :decimals="value.contractData.value.decimals" :amount="value.contractData.value.data.amount"></Decimals>
+          </template>
+        <template v-else-if="JudgingData(value.contractData.value.to, addresses.UniswapV2Router01)">
 
           <template v-if="value.contractData.value.data.path">
             <Decimals :address="value.contractData.value.data.path[0]"

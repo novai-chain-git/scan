@@ -1,6 +1,7 @@
 //合约地址名称
 //合约币地址
 export enum addresses {
+
   //NFT合约地址
   nftAddress = '0x0c1b3Cb5c5916fa53e7a90d4b8D291cA06BfEd2E',
 

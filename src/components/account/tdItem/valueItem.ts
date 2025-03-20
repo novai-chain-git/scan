@@ -90,8 +90,9 @@ async function getDecimals(address: string, amount: any) {
        return //amount.toNumber() / 10 ** 8 // 8位小数
      case addresses.nftAddress:
        return //amount.toNumber() // 无小数
+       
     case addresses.NovaiFaucet:
-    return `${Number(getFormatUnits(amount,18).toFixed(6))}` // 无小数
+    return `${ getDecimalsTo(amount,18)}` // 无小数
      default:
        //所有eth链下的合约处理
        return await ethDecimals(address,amount);
@@ -111,13 +112,16 @@ async function ethDecimals(address: string, amount: any): Promise<any> {
     // }
     if(!address) return getAmount(amount)
      let decimalsTo = await GetContract(address).decimals()
-     console.log(decimalsTo,'decimalsTo',address)
-    // console.log(getFormatUnits(getNormalNumber,decimalsTo).toFixed(6)) 
      amount = getNormalNumber(amount)
-     return `${Number(getFormatUnits(amount,decimalsTo).toFixed(6))}` 
+     return getDecimalsTo(amount,decimalsTo)
+    // return `${Number(getFormatUnits(amount,decimalsTo).toFixed(6))}` 
    }catch (error) {
      console.log(error)
    }
+ }
+ //格式化数据
+ const getDecimalsTo = (amount: string, decimals: any) =>{
+  return `${Number(getFormatUnits(amount,decimals).toFixed(6))}` 
  }
 //  //防止后端传递数据过大
 //  function getNormalNumber(value: any): any {
@@ -137,14 +141,27 @@ export const Decimals = defineComponent({
         type: String,
         default: '',
       },
+      decimals:{
+        type: [String , Number],
+        default: '',
+      }
     },
     setup(props) {
-      let num = ref(0)
+      let num = ref<any>(0)
+      
+      if(props.decimals){
+        let decimals = typeof props.decimals == 'number'? props.decimals:Number(props.decimals)
+        // let nums = getDecimalsTo(props.amount, props.decimals)
+        num.value = `${Number(getFormatUnits(props.amount,decimals).toFixed(6))}`
+      }else{
+        getDecimals(props.address, props.amount).then(res=>{
+
+          num.value = res
+        })
+      }
+      console.log(props.address,"props.address")
       // return  () =>  h('span', {}, `${num.value || '--'}`)
-      getDecimals(props.address, props.amount).then(res=>{
-        console.log(res)
-        num.value = res
-      })
+      
       return  () =>  h('span', {}, `${num.value || '--'}`)
     }
 })

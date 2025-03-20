@@ -17,7 +17,7 @@ export default defineConfig({
   },
   esbuild: {
     // 删除 console debugger
-   drop: ['console', 'debugger']
+  //  drop: ['console', 'debugger']
   },
   
   plugins: [

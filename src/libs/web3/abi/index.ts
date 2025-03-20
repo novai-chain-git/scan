@@ -4,11 +4,13 @@ import usdtAbi from './usdt.json';
 import nusdtAbi from './nusdt.json';
 import uniswap from './UniswapV2Router01.json';
 import NovaiFaucetAbi from './NovaiFaucet.json';
+import bonstakeAbi from './bonstakeAbi.json';
 export {
     erc1155,
     upgradeable,
     usdtAbi,
     nusdtAbi,
     uniswap,
-    NovaiFaucetAbi
+    NovaiFaucetAbi,
+    bonstakeAbi
 }

@@ -4,7 +4,7 @@ import { useFormatter } from '@/stores';
 import { Interface, JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { toReadableAmount } from '@/libs/utils';
 import { addresses, GetContract, getFormatUnits } from '@/libs/web3/index';
-import { nusdtAbi, NovaiFaucetAbi, uniswap } from '@/libs/web3/abi/index';
+import { nusdtAbi, NovaiFaucetAbi, bonstakeAbi , uniswap } from '@/libs/web3/abi/index';
 import { post } from "@/libs"
 
 import dayjs from 'dayjs';
@@ -86,30 +86,24 @@ function mapAmount(
     ?.attributes.filter((x) => x.key === 'YW1vdW50' || x.key === `amount`)
     .map((x) => {
       console.log('x.value：', fromBase64(x.value ?? ''));
-      // let num =  x.key==='amount'? x.value : String.fromCharCode(...fromBase64(x.value ?? ''))
       let num =
         x.key === 'amount'
           ? x.value
           : String.fromCharCode(...fromBase64(x.value ?? ''));
-      // if(num) num = toUtf8String(fromBase64(x.value ?? ''));
 
-      // let str = num.match(/^(\d+)(\D*)$/)
-      //  return `${Number(formatUnits(num.replace(/\D+$/, ''),18)).toFixed(6)}`
-      //return num
+  
       let str = num.match(/^(\d+)(\D*)$/);
       if (str?.length) {
         return `${Number(formatUnits(str[1], 18)).toFixed(6)} ${str[2]}`;
-        //  return `${Number(formatUnits(str[1]),18)).toFixed(6)}`
       }
       return x.key === 'amount'
         ? x.value
         : String.fromCharCode(...fromBase64(x.value ?? ''));
     });
-  console.log(a, 'a');
 }
 
-function getAmount(value: any) {
-  if (value) return Number(Number(formatUnits(value, 18)).toFixed(6));
+function getAmount(value: any, num:number = 18) {
+  if (value) return Number(Number(formatUnits(value, num)).toFixed(6));
   return ``;
 }
 
@@ -142,12 +136,12 @@ const abi = [
   'function name() view returns (string)',
   'function decimals() view returns (uint8)',
 ];
-const iface = new Interface(abi);
 
-const ifaceNusdt = new Interface(nusdtAbi);
-const ifaceUniswap = new Interface(uniswap);
 
-const getNovaiFaucetAbi = new Interface(NovaiFaucetAbi);
+
+
+
+
 
 
 
@@ -164,6 +158,10 @@ const transData = reactive({
   name:""
 });
 
+const BonstakeData = reactive({
+  type: false,
+  value:'0' 
+})
 const swapData = reactive({
   address: "",
   to: '',
@@ -192,12 +190,29 @@ const swapContract = computed(() => {
 
 });
 
+const getInterface = (address?: string) =>{
+  switch (address) {
+    case addresses.Bonstake:
+      return new Interface(bonstakeAbi)
+    case addresses.NovaiFaucet:
+      return new Interface(NovaiFaucetAbi);
+    case addresses.novaichain:
+      return  new Interface(nusdtAbi)
+      //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
+    case addresses.UniswapV2Router01:
+      return new Interface(addresses.UniswapV2Router01)
+    default:
+      return new Interface(abi);
+      //const ifaceUniswap = new Interface(uniswap);
+
+  }
+}
+
 async function getTokenInfo(value: any) {
   try {
 
     const name = await contract.value.name();
     const decimals = await contract.value.decimals();
-    console.log('getTokenInfo：', name, decimals);
     transData.tokenName = name;
     transData.decimals = decimals;
     transData.value = toReadableAmount(value, decimals);
@@ -225,24 +240,37 @@ async function GetEventsByTxHash() {
   }
 }
 
-function parseErc20Data() {
+async function parseErc20Data() {
   try {
     const base64Data = fromBase64(props.tx.tx.body.messages[0].data.data);
     var hexData = toHex(base64Data);
     console.log(hexData, 'hexData')
     let bus: any = props.tx.tx.body.messages[0]?.data.to;
     let transactionData: any = ''
+    if(bus === addresses.Bonstake){
+
+      transactionData = getInterface(bus)?.parseTransaction({
+        data: `0x${hexData}`,
+      })
+      console.log(transactionData,'transactionData')
+   //   
+      BonstakeData.type = true
+      BonstakeData.value = transactionData.args[0]
+      // let decimalsTo = await GetContract(bus,bonstakeAbi).decimals()
+      // console.log(decimalsTo,'decimalsTo')
+      return;
+    } 
+
     if(bus === addresses.NovaiFaucet){
-      transactionData = getNovaiFaucetAbi.parseTransaction({
+      transactionData = getInterface(addresses.NovaiFaucet)?.parseTransaction({
         data: `0x${hexData}`,
       })
       NovaiFaucetData.type = true
       console.log(transactionData,'transactionData')
       getNovaiFaucet(transactionData.args)
-     // const faucet = await GetContract()
       return;
     } else if (props.tx.tx.body.messages[0].data.to === addresses.novaichain) {
-      transactionData = ifaceNusdt.parseTransaction({
+      transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
       console.log(transactionData,'transactionData')
@@ -251,7 +279,7 @@ function parseErc20Data() {
       // console.log(res,'res')
     // })
     } else if (props.tx.tx.body.messages[0].data.to === addresses.UniswapV2Router01) {
-      transactionData = ifaceUniswap.parseTransaction({
+      transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
       console.log(transactionData,'transactionData')
@@ -259,7 +287,7 @@ function parseErc20Data() {
       return;
     } else {
       GetEventsByTxHash()
-      transactionData = iface.parseTransaction({
+      transactionData = getInterface().parseTransaction({
         data: `0x${hexData}`,
       });
      // transData.name = transactionData.name
@@ -288,6 +316,8 @@ async function getNovaiFaucet(args: any) {
  //console.log(nameTo,'decimalsTo')
  NovaiFaucetData.value = args[1]
 }
+
+
 //swap
 async function getSwapInfo(args: any) {
 
@@ -464,6 +494,9 @@ parseErc20Data();
                   </span>
                   <span v-else-if="NovaiFaucetData.type ">
                     {{ getAmount(NovaiFaucetData.value) }}
+                  </span>
+                  <span v-else-if="BonstakeData.type">
+                    {{ getAmount(BonstakeData.value,6) }}
                   </span>
                   <span v-else>
                     {{ objValue.value ? getAmount(objValue.value) : objValue.value }}
