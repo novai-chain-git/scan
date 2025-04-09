@@ -200,7 +200,7 @@ const getInterface = (address?: string) =>{
       return  new Interface(nusdtAbi)
       //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
     case addresses.UniswapV2Router01:
-      return new Interface(addresses.UniswapV2Router01)
+      return new Interface(uniswap)
     default:
       return new Interface(abi);
       //const ifaceUniswap = new Interface(uniswap);
@@ -278,7 +278,8 @@ async function parseErc20Data() {
       // GetContract(bus,nusdtAbi)[transactionData.name]().then(res =>{
       // console.log(res,'res')
     // })
-    } else if (props.tx.tx.body.messages[0].data.to === addresses.UniswapV2Router01) {
+    } else if (props.tx.tx.body.messages[0].data.to === addresses.UniswapV2Router01) {  
+   
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
