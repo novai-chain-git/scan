@@ -10,6 +10,12 @@ import numeral from "numeral"
 import { encryptString, formatNumberWithCommas } from "@/libs/utils"
 import editor from "@/components/editorModule.vue"
 import contractModule from "@/components/token/contract/index.vue"
+import { name } from "@/libs/clients/evmos";
+import nAIImg from "@/assets/images/nai.png"
+import novaiIconImg from "@/assets/images/novaiIcon.svg"
+import usdtIcon from "@/assets/images/usdtIcon.png"
+import btcIcon from "@/assets/images/btc.png"
+import wNovaiIcon from "@/assets/images/8913.svg"
 //import { getBankBalances } from "@/libs/client"
 
 let blockchain = useBlockchain()
@@ -43,6 +49,43 @@ const info = reactive({
   code: null
 
 })
+
+const balanList = reactive([
+{
+    name:"NOVAI",
+    abi:abi,
+    img: novaiIconImg,
+    num: 0
+  },
+  {
+    name:"nUSDT",
+    addresses: addresses.novaichain,
+    abi:abi,
+    img: usdtIcon,
+    num: 0
+  },
+  {
+    name:"nBTC",
+    addresses: addresses.btcAddress,
+    abi:abi,
+    img: btcIcon,
+    num: 0
+  },
+  {
+    name:"wNOVAI",
+    addresses: addresses.wNovai,
+    abi:abi,
+    img: wNovaiIcon,
+    num: 0
+  },
+  {
+    name:"nAI",
+    addresses: addresses.nAI,
+    abi:abi,
+    img: nAIImg,
+    num: 0
+  },
+])
 const novai = ref(0)
 const novaiName = ref('NOVAI')
 
@@ -59,43 +102,66 @@ const wNovaiName = ref("wNOVAI")
 
 async function getUsdt() {
 
-  GetContract(addresses.novaichain, abi).balanceOf(props.token).then(res => {
-    // const number = ;
-    nUsdt.value = Number(getFormatUnits(res, 6))
+  balanList.forEach((item,index) =>{
+    if(item.name == 'NOVAI'){
+      provider().getBalance(props.token).then(res => {
+         balanList[index].num = Number(getFormatUnits(res, 18))
+        })
+    }else if(item.addresses){
+      GetContract(item.addresses, item.abi).balanceOf(props.token).then(res => {
+        console.log(res,'resresres')
+        balanList[index].num = Number(getFormatUnits(res, 6))
+      }).catch(err => {
+        console.log(err, 'err')
+      })
+
+      GetContract(item.addresses, item.abi).name().then((res) => {
+        console.log(res,'resNmae')
+        balanList[index].name = res
   }).catch(err => {
     console.log(err, 'err')
   })
 
-  GetContract(addresses.novaichain, abi).name().then((res) => {
-    nUsdtName.value = res
-  }).catch(err => {
-    console.log(err, 'err')
+    }
   })
 
+  // GetContract(addresses.novaichain, abi).balanceOf(props.token).then(res => {
+  //   // const number = ;
+  //   nUsdt.value = Number(getFormatUnits(res, 6))
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
 
-  GetContract(addresses.btcAddress, abi).balanceOf(props.token).then(res => {
-    // const number = ;
-    nBtc.value = Number(getFormatUnits(res, 6))
-  }).catch(err => {
-    console.log(err, 'err')
-  })
-  GetContract(addresses.btcAddress, abi).name().then((res) => {
-    nBtcName.value = res
-  }).catch(err => {
-    console.log(err, 'err')
-  })
+  // GetContract(addresses.novaichain, abi).name().then((res) => {
+  //   nUsdtName.value = res
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
 
-  GetContract(addresses.wNovai, abi).balanceOf(props.token).then(res => {
-    // const number = ;
-    console.log(res,'res')
-    wNovai.value = Number(getFormatUnits(res, 18));
-  }).catch(err => {
-    console.log(err, 'err')
-  })
 
-  provider().getBalance(props.token).then(res => {
-    novai.value = Number(getFormatUnits(res, 18))
-  })
+  // GetContract(addresses.btcAddress, abi).balanceOf(props.token).then(res => {
+  //   // const number = ;
+  //   nBtc.value = Number(getFormatUnits(res, 6))
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
+  // GetContract(addresses.btcAddress, abi).name().then((res) => {
+  //   nBtcName.value = res
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
+
+  // GetContract(addresses.wNovai, abi).balanceOf(props.token).then(res => {
+  //   // const number = ;
+  //   console.log(res,'res')
+  //   wNovai.value = Number(getFormatUnits(res, 18));
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
+
+  // provider().getBalance(props.token).then(res => {
+  //   novai.value = Number(getFormatUnits(res, 18))
+  // })
 }
 watch(
   () => props.token,
@@ -137,6 +203,7 @@ async function totalSupply() {
     let num = await GetContractFun.totalSupply()
     //获取合约币精度
     let decimals = await GetContractFun.decimals()
+    console.log(decimals,'decimals')
     info.total = getFormatUnits(num, decimals);
 
     //获取合约币名称
@@ -293,7 +360,18 @@ let getTotalS = computed(() => {
         <div class="text-[14px]  font-[OrbitronMedium] tracking-[.5px]">{{ $t('token.currency') }}</div>
 
         <div>
-          <div class="flex items-center px-4 my-2 md:!my-[22px]">
+          <div v-for="(item,key) in balanList" :key="key" class="flex items-center px-4 my-2 md:!my-[22px]">
+            <img class="w-[28px] mr-4" :src="item.img"></img>
+            <div class="flex-1">
+              <div class=" ">
+                {{
+                  item.num
+                }}
+                {{ item.name }}
+              </div>
+            </div>
+          </div>
+          <!-- <div class="flex items-center px-4 my-2 md:!my-[22px]">
             <img class="w-[28px] mr-4" src="@/assets/images/novaiIcon.svg"></img>
             <div class="flex-1">
               <div class=" ">
@@ -337,7 +415,7 @@ let getTotalS = computed(() => {
                 {{ wNovaiName }}
               </div>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
