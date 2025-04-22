@@ -76,6 +76,7 @@ const balanList = reactive([
     addresses: addresses.wNovai,
     abi:abi,
     img: wNovaiIcon,
+    radix: 18,
     num: 0
   },
   {
@@ -83,6 +84,7 @@ const balanList = reactive([
     addresses: addresses.nAI,
     abi:abi,
     img: nAIImg,
+    radix: 18,
     num: 0
   },
 ])
@@ -110,7 +112,7 @@ async function getUsdt() {
     }else if(item.addresses){
       GetContract(item.addresses, item.abi).balanceOf(props.token).then(res => {
         console.log(res,'resresres')
-        balanList[index].num = Number(getFormatUnits(res, 6))
+        balanList[index].num = Number(getFormatUnits(res, item.radix || 6))
       }).catch(err => {
         console.log(err, 'err')
       })

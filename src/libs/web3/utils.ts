@@ -125,7 +125,28 @@ export function GetContract(
 }
 
 export function getFormatUnits(amount: any, unit: any = 18): number {
-  return Number(formatUnits(amount, unit));
+  let num = parseFloat(formatUnits(amount, unit))
+  if (isNaN(num) || !isFinite(num)) {
+    return num;
+  }
+    // 转换为字符串表示
+    const str = num.toString();
+  
+    // 判断是否是科学计数法
+    if (str.includes('e')) {
+      const [coefficient, exponent] = str.split('e');
+      const exp = parseInt(exponent);
+      
+      // 处理大数（正指数）
+      if (exp > 20) {
+        return num; // 保持科学计数法表示
+      }
+
+      return parseFloat(num.toFixed(6));
+    }
+    
+    // 不是科学计数法或不需要处理的情况
+    return num;
 }
 //保留小数
 // 转换为链上可读数据

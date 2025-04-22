@@ -25,9 +25,14 @@ import DonutChart from '@/components/charts/DonutChart.vue';
 import transaction from '@/components/account/transaction.vue';
 import tokenNrcs from "@/components/account/tokenNrcs.vue"
 
+import novaiIconImg from "@/assets/images/novaiIcon.svg"
+import nAIImg from "@/assets/images/nai.png"
+import usdtIcon from "@/assets/images/usdtIcon.png"
+import btcIcon from "@/assets/images/btc.png"
+import wNovaiIcon from "@/assets/images/8913.svg"
 
 import { computed, ref } from '@vue/reactivity';
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, reactive } from 'vue';
 import { Icon } from '@iconify/vue';
 import { formatNumberWithCommas } from "@/libs/utils"
 //import {  } from 'ethers';
@@ -73,28 +78,75 @@ const limit = ref(100)
 // const limit = ref(20)
 // const page = ref(1)
 
-const novaiUsdt = ref(0);
-const novaiName = ref('nUSDT');
+// const novaiUsdt = ref(0);
+// const novaiName = ref('nUSDT');
 
-const nft = ref(0);
-const nftName = ref('AINPC');
+// const nft = ref(0);
+// const nftName = ref('AINPC');
 
-const nBtc = ref(0);
-const nBtcName = ref('nBTC');
+// const nBtc = ref(0);
+// const nBtcName = ref('nBTC');
 
-const wNovai = ref(0)
-const wNovaiName = ref("wNOVAI")
+// const wNovai = ref(0)
+// const wNovaiName = ref("wNOVAI")
 
+
+let erc1155List = [
+    'function balanceOf(address account, uint256 id) view returns(uint256)',
+  ];
+const balanList = reactive([
+  {
+    name:"nUSDT",
+    addresses: addresses.novaichain,
+    abi:abi,
+    img: usdtIcon,
+    num: 0
+  },
+  {
+    name:"nBTC",
+    addresses: addresses.btcAddress,
+    abi:abi,
+    img: btcIcon,
+    num: 0
+  },
+  {
+    name:"AINPC",
+    addresses: addresses.nftAddress,
+    abi:erc1155List,
+    img: novaiIconImg,
+    num: 0
+  },
+  {
+    name:"wNOVAI",
+    addresses: addresses.wNovai,
+    abi:abi,
+    img: wNovaiIcon,
+    radix: 18,
+    num: 0
+  },
+  
+  {
+    name:"nAI",
+    addresses: addresses.nAI,
+    abi:abi,
+    img: nAIImg,
+    radix: 18,
+    num: 0
+  },
+])
 onMounted(() => { });
 
 
 
 const createInfo = () => {
-  novaiUsdt.value = 0
-  novaiName.value = ''
-  nBtc.value = 0
-  nBtcName.value = ''
-  wNovai.value = 0
+  // novaiUsdt.value = 0
+  // novaiName.value = ''
+  // nBtc.value = 0
+  // nBtcName.value = ''
+  // wNovai.value = 0
+  balanList.map((_,index) =>{
+    balanList[index].num = 0
+  })
   account.value = {} as AuthAccount
   txs.value = [] as TxResponse[]
   rewards.value = {} as DelegatorRewards
@@ -160,19 +212,28 @@ const totalAmountByCategory = computed(() => {
     //sumBal += Number(format.formatToken(x))
   });
 
-  const novaiNum = Number(novaiUsdt.value)
-  const nBtcNum = Number(nBtc.value)
-  const wNovaiNum = Number(wNovai.value)
-  const nftNum = Number(nft.value)
-  const totalNum = sumBal + novaiNum + nBtcNum + nftNum + wNovaiNum
-  return {
-    fanChartData: [sumBal, novaiNum, nBtcNum, nftNum, wNovaiNum],
-    //fanChartData: [0, 0, 0, 0],
-    totalNum,
 
+
+  let totalNum = sumBal
+  const balanListNum = balanList.map(item =>{
+    let num = Number(item.num)
+    totalNum = totalNum + num
+    return num
+  })
+  console.log(balanListNum,'balanListNum')
+ // const totalNum = sumBal + novaiNum + nBtcNum + nftNum + wNovaiNum
+  return {
+    
+    fanChartData: [sumBal, ...balanListNum],
+    totalNum,
+    
   };
 });
-const labels = computed(() => ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]);
+// const labels = computed(() => ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]);
+const labels = computed(() => {
+  return ['NOVAI', ...balanList.map(item => item.name)]
+//  return ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]
+});
 // const labels = ['Balance', 'Delegation', 'Reward', 'Unbonding'];
 
 // const totalAmount = computed(() => {
@@ -217,67 +278,95 @@ const totalValue = computed(() => {
 
 //获取Navai链下的 usdt数量
 async function getUsdt(address: string) {
-  GetContract(addresses.novaichain, abi)
-    .balanceOf(address)
-    .then((res) => {
-      // const number = ;
-      novaiUsdt.value = Number(formatUnits(res, 6));
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
-  GetContract(addresses.novaichain, abi)
-    .name()
-    .then((res) => {
-      novaiName.value = res;
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
+  // GetContract(addresses.novaichain, abi)
+  //   .balanceOf(address)
+  //   .then((res) => {
+  //     // const number = ;
+  //     novaiUsdt.value = Number(formatUnits(res, 6));
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
+  // GetContract(addresses.novaichain, abi)
+  //   .name()
+  //   .then((res) => {
+  //     novaiName.value = res;
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
 
-  GetContract(addresses.btcAddress, abi)
-    .balanceOf(address)
-    .then((res) => {
-      // const number = ;
-      nBtc.value = Number(formatUnits(res, 6));
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
-  GetContract(addresses.btcAddress, abi)
-    .name()
-    .then((res) => {
-      nBtcName.value = res;
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
+  // GetContract(addresses.btcAddress, abi)
+  //   .balanceOf(address)
+  //   .then((res) => {
+  //     // const number = ;
+  //     nBtc.value = Number(formatUnits(res, 6));
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
+  // GetContract(addresses.btcAddress, abi)
+  //   .name()
+  //   .then((res) => {
+  //     nBtcName.value = res;
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
 
-  GetContract(addresses.wNovai, abi)
-    .balanceOf(address)
-    .then((res) => {
-      // const number = ;
-      console.log(res, 'res')
-      wNovai.value = Number(formatUnits(res, 18));
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
+  // GetContract(addresses.wNovai, abi)
+  //   .balanceOf(address)
+  //   .then((res) => {
+  //     // const number = ;
+  //     console.log(res, 'res')
+  //     wNovai.value = Number(formatUnits(res, 18));
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
 
-  let nfts = GetContract(addresses.nftAddress, erc1155);
-  let erc1155List = [
-    'function balanceOf(address account, uint256 id) view returns(uint256)',
-  ];
-  GetContract(addresses.nftAddress, erc1155List)
+  
+  
+  // GetContract(addresses.nftAddress, erc1155List)
+  //   .balanceOf(address, getParseUnits('1', 0))
+  //   .then((res) => {
+  //     console.log(res, 'res');
+  //     // const number = ;
+  //     nft.value = res.toString();
+  //   })
+  //   .catch((err) => {
+  //     console.log(err, 'err');
+  //   });
+
+    
+  balanList.forEach((item,index) =>{
+    if(item.name == 'AINPC'){
+      GetContract(item.addresses, item.abi)
     .balanceOf(address, getParseUnits('1', 0))
     .then((res) => {
-      console.log(res, 'res');
       // const number = ;
-      nft.value = res.toString();
+      balanList[index].num = res.toString();
     })
     .catch((err) => {
       console.log(err, 'err');
     });
+    }else if(item.addresses){
+      GetContract(item.addresses, item.abi).balanceOf(address).then(res => {
+       
+        balanList[index].num = getFormatUnits(res, item.radix || 6)
+      }).catch(err => {
+        console.log(err, 'err')
+      })
+
+  //     GetContract(item.addresses, item.abi).name().then((res) => {
+  //       console.log(res,'resNmae')
+  //       balanList[index].name = res
+  // }).catch(err => {
+  //   console.log(err, 'err')
+  // })
+
+    }
+  })
 }
 
 function loadAccount(address: string) {
@@ -597,7 +686,7 @@ const percentage = (v: any, k: any) => {
                   </td>
                   <td>{{ format.formatToken(item, true, '0.[000000]') }}</td>
                 </tr>
-                <tr>
+                <!-- <tr>
                   <td>{{ novaiName }}</td>
                   <td class="flex items-center">
                     <img class="w-[28px] mr-2" src="@/assets/images/usdtIcon.png"></img>
@@ -632,6 +721,19 @@ const percentage = (v: any, k: any) => {
                   </td>
                   <td>{{ percentage(wNovai, totalAmountByCategory.totalNum) }}%</td>
                   <td>{{ wNovai + ' ' + wNovaiName }}</td>
+                </tr> -->
+
+                <tr v-for="(item, index) in balanList" :key="index">
+                  <td>{{ item.name }}</td>
+                  <td class="flex items-center">
+                    <img class="w-[28px] mr-2" :src="item.img"></img>
+                    {{ item.name }}
+                  </td>
+
+                  <td>
+                    {{ percentage(item.num, totalAmountByCategory.totalNum) }}%
+                  </td>
+                  <td>{{ item.num + ' ' + item.name }}</td>
                 </tr>
               </tbody>
             </table>
