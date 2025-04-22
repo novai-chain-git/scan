@@ -142,11 +142,9 @@ export function getFormatUnits(amount: any, unit: any = 18): number {
         return num; // 保持科学计数法表示
       }
 
-      return parseFloat(num.toFixed(6));
     }
     
-    // 不是科学计数法或不需要处理的情况
-    return num;
+    return parseFloat(num.toFixed(6));
 }
 //保留小数
 // 转换为链上可读数据
