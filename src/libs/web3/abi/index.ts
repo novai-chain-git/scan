@@ -5,6 +5,7 @@ import nusdtAbi from './nusdt.json';
 import uniswap from './UniswapV2Router01.json';
 import NovaiFaucetAbi from './NovaiFaucet.json';
 import bonstakeAbi from './bonstakeAbi.json';
+import swapNai from './swapNai.json';
 export {
     erc1155,
     upgradeable,
@@ -12,5 +13,6 @@ export {
     nusdtAbi,
     uniswap,
     NovaiFaucetAbi,
-    bonstakeAbi
+    bonstakeAbi,
+    swapNai
 }

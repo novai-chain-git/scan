@@ -162,13 +162,11 @@ async function getPageList() {
   }
 
   try {
-    console.log('asdasdasdasd')
     let { data } = await post('/chainFinder/api/GetEventsByAddress', {
       address: address,
       pageNo: page.value,
       pageSize: props.limit
     })
-    console.log(data, 'GetEventsByAddress')
     total.value = data.pageNumber
     let arr = data.event
     contractData.value = [...contractData.value, ...data.contractData2]
@@ -179,7 +177,6 @@ async function getPageList() {
       }
 
     })
-    console.log(arr, 'arr')
     recentReceived.value = [...recentReceived.value, ...arr]
 
     recentReceivedLoding.value = false

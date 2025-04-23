@@ -4,7 +4,7 @@ import { useFormatter } from '@/stores';
 import { Interface, JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { toReadableAmount } from '@/libs/utils';
 import { addresses, GetContract, getFormatUnits } from '@/libs/web3/index';
-import { nusdtAbi, NovaiFaucetAbi, bonstakeAbi , uniswap } from '@/libs/web3/abi/index';
+import { nusdtAbi, NovaiFaucetAbi, bonstakeAbi , uniswap, swapNai } from '@/libs/web3/abi/index';
 import { post } from "@/libs"
 
 import dayjs from 'dayjs';
@@ -200,7 +200,9 @@ const getInterface = (address?: string) =>{
       return  new Interface(nusdtAbi)
       //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
     case addresses.UniswapV2Router01:
-      return new Interface(uniswap)
+      return new Interface(uniswap)    
+    case addresses.nAI_UniSwap:
+      return new Interface(swapNai)
     default:
       return new Interface(abi);
       //const ifaceUniswap = new Interface(uniswap);
@@ -269,7 +271,7 @@ async function parseErc20Data() {
       console.log(transactionData,'transactionData')
       getNovaiFaucet(transactionData.args)
       return;
-    } else if (props.tx.tx.body.messages[0].data.to === addresses.novaichain) {
+    } else if (bus === addresses.novaichain) {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
@@ -278,13 +280,21 @@ async function parseErc20Data() {
       // GetContract(bus,nusdtAbi)[transactionData.name]().then(res =>{
       // console.log(res,'res')
     // })
-    } else if (props.tx.tx.body.messages[0].data.to === addresses.UniswapV2Router01) {  
-   
+    } else if (bus === addresses.UniswapV2Router01) {  
+
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
-      console.log(transactionData,'transactionData')
       getSwapInfo(transactionData.args)
+      return;
+    } else if(bus === addresses.nAI_UniSwap){
+
+      transactionData = getInterface(bus)?.parseTransaction({
+        data: `0x${hexData}`,
+      });
+      console.log(bus,'props.tx.tx.body.messages[0].data.to',transactionData)  
+      console.log(transactionData,'transactionData')
+      getSwapNai(transactionData.args)
       return;
     } else {
       GetEventsByTxHash()
@@ -326,12 +336,13 @@ async function getSwapInfo(args: any) {
     console.log(args,'args')
     let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
     if(args.length == 5){
-      decimalsTo = await GetContract(args[2][0]).decimals()
-     nameTo = await GetContract(args[2][0]).name()
+      decimalsTo = await GetContract(args[2][0],swapNai).decimals()
+      console.log(decimalsTo,'decimalsTo')
+     nameTo = await GetContract(args[2][0],swapNai).name()
      numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
     }
-    let decimalsForm = await GetContract(args[args.length == 5?2:1][1]).decimals()
-    let nameForm = await GetContract(args[args.length == 5?2:1][1]).name()
+    let decimalsForm = await GetContract(args[args.length == 5?2:1][1],swapNai).decimals()
+    let nameForm = await GetContract(args[args.length == 5?2:1][1],swapNai).name()
 
      
     let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
@@ -348,6 +359,35 @@ async function getSwapInfo(args: any) {
   } finally {
    
   }
+}
+
+async function getSwapNai(args: any) {
+
+try {
+  let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
+  if(args.length == 5){
+    decimalsTo = await GetContract(args[2][0]).decimals()
+   nameTo = await GetContract(args[2][0]).name()
+   numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
+  }
+  let decimalsForm = await GetContract(args[args.length == 5?2:1][1]).decimals()
+  let nameForm = await GetContract(args[args.length == 5?2:1][1]).name()
+
+   
+  let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
+
+  swapData.address = args[ args.length == 5?3:2];
+  swapData.time = format.toDay(Number(args[args.length == 5?4:3]) * 1000)
+
+  swapData.to = `${numTo} ${nameTo}`
+  swapData.form = `${numform} ${nameForm}`
+  swapData.toAddress = args[2][0]
+  swapData.formAddress = args[2][1]
+  swapData.automation = args.length == 5
+  swapData.showSwap = true;
+} finally {
+ 
+}
 }
 parseErc20Data();
 </script>

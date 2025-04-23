@@ -629,7 +629,7 @@ window.addEventListener('scroll', handleScroll);
             <div
               class="md:mt-[20px] mt-[10px] text-[14px] text-[#ffffff] md:!text-left text-center"
             >
-              Copyright© 2017-2024 novaichain.com
+              Copyright© 2017-2025 novaichain.com
             </div>
           </div>
         </div>

@@ -54,6 +54,7 @@ export enum addresses {
   NovaiFaucet_Novai = '0x16BdAD6e3Dbb2f066bd5a5f5744FeB9B2335FB8B',
   MinerRewardDistributor_Novai = '0x988Ee60ec3De0400D05F7De4707D4fB7a156171a',
   nAI = '0x53788c75206c3BD55b2304d627C1fF89dc58b02C',
+  nAI_UniSwap = '0xb96B7d6f62BA47f142ec9Ba4EF3C995ee8436A71'
 
 }
 interface Address {
