@@ -272,7 +272,7 @@ const logs = computed(() => {
             {{ item.to }}
           </div>
           <div>
-            {{ $t('tx.Amount') }}:{{ item.amount }}
+            {{ $t('tx.Amount') }}：{{ item.amount }}
             {{ item.symbol }}
           </div>
         </div>
