@@ -246,7 +246,7 @@ async function parseErc20Data() {
   try {
     const base64Data = fromBase64(props.tx.tx.body.messages[0].data.data);
     var hexData = toHex(base64Data);
-    console.log(hexData, 'hexData')
+  //  console.log(hexData, 'hexData')
     let bus: any = props.tx.tx.body.messages[0]?.data.to;
     let transactionData: any = ''
     if(bus === addresses.Bonstake){
@@ -268,14 +268,13 @@ async function parseErc20Data() {
         data: `0x${hexData}`,
       })
       NovaiFaucetData.type = true
-      console.log(transactionData,'transactionData')
       getNovaiFaucet(transactionData.args)
       return;
     } else if (bus === addresses.novaichain) {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
-      console.log(transactionData,'transactionData')
+  //    console.log(transactionData,'transactionData')
       // console.log(transactionData.name,'transactionData')
       // GetContract(bus,nusdtAbi)[transactionData.name]().then(res =>{
       // console.log(res,'res')
@@ -292,8 +291,6 @@ async function parseErc20Data() {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
-      console.log(bus,'props.tx.tx.body.messages[0].data.to',transactionData)  
-      console.log(transactionData,'transactionData')
       getSwapNai(transactionData.args)
       return;
     } else {

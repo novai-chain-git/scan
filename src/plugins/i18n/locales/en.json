@@ -300,7 +300,14 @@
     "AllTransfers": "All Transfers",
     "NetTransfers": "Net Transfers",
     "Token": "Token",
-    "method": "method"
+    "method": "method",
+    
+    "Owner": "Owner",
+    "Spender": "Spender",
+    "Amount": "Amount",
+    "approva": "Approva",
+    "transfer": "Transfer",
+    "swap": "swap"
   },
   "uptime": {
     "overall": "Overall",

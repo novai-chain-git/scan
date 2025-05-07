@@ -290,7 +290,13 @@
     "AllTransfers": "所有转账",
     "NetTransfers": "净转账",
     "Token": "代币",
-    "method": "方法"
+    "method": "方法",
+    "Owner": "授权地址",
+    "Spender": "被授权地址",
+    "Amount": "数量",
+    "approva": "授权",
+    "transfer": "交易",
+    "swap": "swap"
   },
   "uptime": {
     "overall": "整体",
