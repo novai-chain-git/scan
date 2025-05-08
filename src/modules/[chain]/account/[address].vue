@@ -69,7 +69,7 @@ const balances = ref([] as Coin[]);
 const unbonding = ref([] as UnbondingResponses[]);
 const unbondingTotal = ref(0);
 const chart = {};
-const limit = ref(100)
+const limit = ref(20)
 
 // const recentReceived = ref([] as TxResponseErc[]);
 // const recentReceivedLoding = ref(false as Boolean)
