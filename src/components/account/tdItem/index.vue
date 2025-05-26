@@ -54,6 +54,16 @@ async function ethDecimals(address: string, amount: any): Promise<any> {
     console.log(error);
   }
 }
+
+//swap
+const getAddressInfo = function(address: string){
+  if(JudgingData(address, addresses.novaichain)){
+    return 'nUSDT'
+  } else if(JudgingData(address, addresses.nAI)){
+    return 'nAI'
+  }
+  return ''
+}
 </script>
 <template>
   <div>
@@ -160,76 +170,43 @@ async function ethDecimals(address: string, amount: any): Promise<any> {
             JudgingData(
               value.contractData.value.to,
               addresses.UniswapV2Router01
-            )
+            ) || JudgingData(value.contractData.value.to, addresses.nAI_UniSwap)
           "
         >
           <template v-if="value.contractData.value.data.path">
             <RouterLink
               class="textjb-lv"
               v-if="
-                JudgingData(
-                  value.contractData.value.data.path[0],
-                  addresses.novaichain
+                getAddressInfo(
+                  value.contractData.value.data.path[0]
                 )
               "
               :to="`/${chain}/token/${value.contractData.value.data.path[0]}`"
             >
-              nUSDT
+              {{getAddressInfo(
+                  value.contractData.value.data.path[0]
+                )}}
             </RouterLink>
             <span v-else>NOVAI</span>
             <br />
             <RouterLink
               v-if="
-                JudgingData(
-                  value.contractData.value.data.path[1],
-                  addresses.novaichain
+                getAddressInfo(
+                  value.contractData.value.data.path[1]
                 )
               "
               class="textjb-lv"
               :to="`/${chain}/token/${value.contractData.value.data.path[1]}`"
             >
-              nUSDT
+              {{ getAddressInfo(
+                  value.contractData.value.data.path[1]
+                ) }}
             </RouterLink>
             <span v-else>NOVAI</span>
           </template>
           <template v-else> -- </template>
         </template>
-        <template
-          v-else-if="
-            JudgingData(value.contractData.value.to, addresses.nAI_UniSwap)
-          "
-        >
-          <template v-if="value.contractData.value.data.path">
-            <RouterLink
-              class="textjb-lv"
-              v-if="
-                JudgingData(
-                  value.contractData.value.data.path[0],
-                  addresses.nAI
-                )
-              "
-              :to="`/${chain}/token/${value.contractData.value.data.path[0]}`"
-            >
-              nAI
-            </RouterLink>
-            <span v-else>NOVAI</span>
-            <br />
-            <RouterLink
-              v-if="
-                JudgingData(
-                  value.contractData.value.data.path[1],
-                  addresses.nAI
-                )
-              "
-              class="textjb-lv"
-              :to="`/${chain}/token/${value.contractData.value.data.path[1]}`"
-            >
-              nAI
-            </RouterLink>
-            <span v-else>NOVAI</span>
-          </template>
-          <template v-else> -- </template>
-        </template>
+
         <template
           v-else-if="
             JudgingData(value.contractData.value.to, addresses.ChainConnect)
