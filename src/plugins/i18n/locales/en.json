@@ -88,7 +88,8 @@
     "receive": "Receive",
     "contract": "contract",
     "Burn": "Burn",
-    "Transfer": "Transfer"
+    "Transfer": "Transfer",
+    "errText": "Network exception, click retry"
   },
   "block": {
     "estimated_time": "Estimated Time",

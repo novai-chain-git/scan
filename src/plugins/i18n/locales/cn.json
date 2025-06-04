@@ -86,7 +86,8 @@
     "receive": "接收",
     "contract": "合约名",
     "Burn": "销毁",
-    "Transfer": "转移"
+    "Transfer": "转移",
+    "errText": "网络异常,点击重试"
   },
   "block": {
     "estimated_time": "预计时间",

@@ -56,6 +56,7 @@ const blockchain = useBlockchain();
 const recentReceived = ref([] as TxResponseErc[]);
 const contractData = ref([] as any[])
 const recentReceivedLoding = ref(true as Boolean)
+const errTypre = ref(true as Boolean)
 const txsRecentReceived = ref(true);
 const total = ref('' as any)
 //const limit = ref(20)
@@ -94,9 +95,19 @@ watch(
 function callback() {
 
   if (page.value >= total.value || recentReceivedLoding.value) return
+  
   recentReceivedLoding.value = true
+  if(errTypre.value){
   page.value = page.value + 1
+  }
   getPageList()
+}
+// 
+function errLoding(){
+  if(!errTypre.value){
+    getPageList()
+  }
+   
 }
 //获取数据二次处理
 function getToken(value: any,list:TxResponseErc[]):TxResponseErcObj {
@@ -118,10 +129,9 @@ async function getPageList() {
   if (isAddress(address)) {
     //  address = toCosmosAddress(address);
   }
-
+  errTypre.value = true
 
   try {
-    console.log('asdasdasdasd')
     let { data } = await post('/chainFinder/api/GetContractEventsByAddress', {
       address: address,
       pageNo: page.value,
@@ -138,18 +148,13 @@ async function getPageList() {
       }
 
     }).filter((item: TxResponseErc) => item.contractData && item.contractData?.type)
-    console.log(arr, 'arr')
     recentReceived.value = [...recentReceived.value, ...arr]
-    // .filter((item: TxResponseErc) => 
-    // item.contractData?.type && 
-    // (item.contractData.value.name == 'Transfer' || item.contractData.value.name == 'Approval'))
-    // console.log(arr, 'arr')
-    // recentReceived.value = [...recentReceived.value, ...arr]
 
     recentReceivedLoding.value = false
-  if (recentReceived.value.length < 50) return callback()
+//  if (recentReceived.value.length < 50) return callback()
   } catch (err) {
     recentReceivedLoding.value = false
+    errTypre.value = false
   }
 
 }
@@ -297,9 +302,9 @@ const getAddress = function (value: any) {
           </template>
           <tr class="border-dashed">
             <td colspan="10">
-              <div class="text-center">
+              <div class="text-center" @click="errLoding()">
 
-                {{ !recentReceivedLoding && recentReceived.length === 0 ? $t('account.no_transactions') :
+                {{ !recentReceivedLoding && !errTypre? $t('account.errText'): !recentReceivedLoding && recentReceived.length === 0 ? $t('account.no_transactions') :
                   recentReceivedLoding || page < total ? $t('account.loading') : '' }} </div>
             </td>
           </tr>
