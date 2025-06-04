@@ -1044,9 +1044,9 @@ const percentage = (v: any, k: any) => {
       </div>
 
       <div>
-        <transaction v-if="tab === 'transaction'" :address="address" :chain="chain" :limit="limit" :to="false"
+        <transaction v-if="tab === 'transaction'" :address="address" :chain="chain" :limit="20" :to="false"
           :parseErc20Data='parseErc20Data'></transaction>
-        <tokenNrcs v-if="tab === 'TokenTransfers'" :address="address" :chain="chain" :limit="limit"
+        <tokenNrcs v-if="tab === 'TokenTransfers'" :address="address" :chain="chain" :limit="5"
           :parseErc20Data='parseErc20Data'></tokenNrcs>
 
       </div>
