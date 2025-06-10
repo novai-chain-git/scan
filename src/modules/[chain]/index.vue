@@ -12,15 +12,17 @@ import {
   useParamStore,
   useBaseStore
 } from '@/stores';
-import { onMounted, ref } from 'vue';
+import { formatUnits } from 'ethers';
+import { onMounted, ref, nextTick, defineProps } from 'vue';
 import { useIndexModule, colorMap } from './indexStore';
 import { computed } from '@vue/reactivity';
 import { formatNumberWithCommas } from "@/libs/utils"
 import CardStatisticsVertical from '@/components/CardStatisticsVertical.vue';
+import TotalCommit from '@/components/TotalCommit.vue';
 import ProposalListItem from '@/components/ProposalListItem.vue';
 import ArrayObjectElement from '@/components/dynamic/ArrayObjectElement.vue';
 import HomeStaking from '@/components/HomeStaking.vue';
-import RecentTransaction from '@/components/RecentTransaction.vue';
+import RecentTransaction from '@/components/RecentTransaction/index.vue';
 
 const props = defineProps(['chain']);
 
@@ -33,6 +35,10 @@ const dialog = useTxDialog();
 const stakingStore = useStakingStore();
 const paramStore = useParamStore();
 
+
+const atStart = ref(true);
+const atEnd = ref(false);
+const scrollContainer = ref<HTMLElement | null>(null)
 const coinInfo = computed(() => {
   return store.coinInfo;
 });
@@ -42,7 +48,21 @@ const series = ref([{
   data: [10, 10, 10, 10, 10, 10, 10, 10]
 }])
 
+const scrollToEnd = (type:boolean = false) => {
+  if (scrollContainer.value) {
+      scrollContainer.value?.scrollTo({
+        left: type?0:scrollContainer.value?.scrollWidth,
+        behavior: 'smooth' // 平滑滚动效果
+      })
+    }
+}
+function onScroll() {
+   const el = scrollContainer.value;
+  if (!el) return;
 
+  atStart.value = el.scrollLeft === 0;
+  atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1; // 减1防止误差
+}
 const pricesList = ref<any[]>([])
 
 //时间格式化
@@ -91,18 +111,18 @@ const chartOptions = computed(() => {
       enabled: false
     },
     tooltip: {
-        enabled: true, // 启用提示框
-        theme: 'dark',  // 设置提示框主题
-        style: {
-          color: '#ffffff'  // 设置文字颜色
-        },
-        background: '#333', // 设置背景颜色
-        y: {
-          title: {
-            
-          }
-        }
+      enabled: true, // 启用提示框
+      theme: 'dark',  // 设置提示框主题
+      style: {
+        color: '#ffffff'  // 设置文字颜色
       },
+      background: '#333', // 设置背景颜色
+      y: {
+        title: {
+
+        }
+      }
+    },
     legend: {
       show: false
     },
@@ -140,14 +160,14 @@ const chartOptions = computed(() => {
     //   },
     // },
     yaxis: {
-     // show:false,
+      // show:false,
       title: {
         text: ''
       },
     },
     xaxis: {
       //type: 'datetime',
-      show:false,
+      show: false,
       categories: getPastDays(7)
       //categories: ['21 May', '24 May', '27May','21 May', '24 May', '27May','21 May', '24 May', '27May','21 May']
     },
@@ -165,6 +185,12 @@ const ticker = computed(() => store.coinInfo.tickers[store.tickerIndex]);
 
 const blocksList = computed(() => {
   return base.recents.slice(-6)
+  // return base.recents.filter( (item, index) => {
+  //   if(index < 4) return item
+  // });
+});
+const latestList = computed(() => {
+  return base.getLatestList.slice(-8)
   // return base.recents.filter( (item, index) => {
   //   if(index < 4) return item
   // });
@@ -297,6 +323,21 @@ const amount = computed({
   },
 });
 
+function getAmount(value: any, num: number = 18) {
+  if (value) return Number(Number(formatUnits(value, num)).toFixed(6));
+  return ``;
+}
+const getTxs = function (item: any) {
+  if (item.tx_response && item.tx_response.tx.body.messages.length) {
+      let messages: any[] = item.tx_response.tx.body.messages; 
+      let obj = messages[0].data ? messages[0].data : {};
+      return obj.value ? getAmount(obj.value) : 0
+      // obj.value = obj.value?formatter.format(Number(obj.value)):''
+
+    }
+  return 0
+}
+
 
 //获取7日价格
 const getApTokenPrices = function () {
@@ -340,7 +381,9 @@ getApTokenPrices()
 
 <template>
   <div>
-    <div class="rounded-[16px] mb-[12px] mb:[24px] border border-[#FFFFFF]/[.16] bg_jb" style="">
+    <TotalCommit :chain="props.chain" />
+
+    <div class="rounded-[16px] mb-[12px] mb:[24px] border border-[#FFFFFF]/[.16] bg-[#131315]/[.8]" style="">
 
       <div class="text-[#ffffff]">
         <div class="  border-b border-[#FFFFFF]/[.16]
@@ -365,21 +408,68 @@ getApTokenPrices()
       </div>
     </div>
 
-    <div class="grid  lg:!flex-row grid-cols-1 lg:!grid-cols-3 gap-[10px]">
+    <div class="mt-[10px] rounded-[16px] mb-[12px] mb:[24px] border border-[#FFFFFF]/[.16] bg-[#131315]/[.8]">
+       <div class=" ">
 
-      <div class=" shadow lg:!col-span-2 border border-[#FFFFFF]/[.16] bg-[#131315]/[.8] rounded-[16px]">
-
-        <div class="text-[#ffffff] min-h-[100%] flex flex-col">
+        <div class="text-[#ffffff]  flex flex-col">
           <div class="border-b border-[#FFFFFF]/[.16]
-           md:pl-[24px] md:pt-[16px] md:pb-[13px] 
-           pl-[12px] pt-[8px] pb-[8px]
+            md:pt-[16px] md:pb-[13px] 
+            pl-[12px] pt-[8px] pb-[8px]
           text-[14px] 
           font-[OrbitronMedium] tracking-[.5px]">
             <img class="w-[18px] h-[18px] inline-block" src="../../assets/images/Blocks.svg" alt="">
             {{ $t('module.blocks') }}
           </div>
           <!-- -->
-          <div class="flex flex-1  flex-wrap  px-[24px]  grid grid-cols-1  md:!grid-cols-2 lg:!grid-cols-3">
+          <div class="flex-1 px-[24px] py-[20px] min-h-[100px]">
+            <div class=" items-center relative">
+            <div @click="scrollToEnd(true)" class="hidden md:!block  w-[24px] h-[24px] translate-y-[50%] absolute top-50% left-[-24px]
+             z-10 rounded-full bg-[#3b3b3b96]
+             text-center leading-[27px]"><</div>
+            <div @click="scrollToEnd(false)" class="hidden md:!block w-[24px] h-[24px] translate-y-[50%] absolute top-50% right-[-24px] 
+            z-10 rounded-full bg-[#3b3b3b96]
+             text-center leading-[27px]">></div>
+            <div @scroll="onScroll" ref="scrollContainer" class="w-[100%] overflow-x-auto w-auto whitespace-nowrap md:()   ">
+            <div :class="`w-[48%] md:!w-[22%] ${key == 7?'mr-[0%]':'mr-[7%] '} ${key == 3 ||key ==7?'md:!mr-[0%]':'md:!mr-[4%]'} inline-block`" v-for="(item, key) in latestList" :key="key">
+              <RouterLink 
+              v-if="item?.block.header?.height"
+              class=" text-[#999999] text-sm font-medium text-left"
+              :to="`/${chain}/block/${item.block.header.height}`">
+              <div class="  h-[100%]">
+                <div class="">
+                  <div class="" :class="[(key + 1) % 3 == 0 ? '' : (key + 1) % 2 == 0 ? 'b' : 'c']">
+                    <span class="text-[#ffffff] text-[18px] md:text-[20px] font-[OrbitronMedium] tracking-[.5px]">
+                      #{{ item.block.header.height }}
+                    </span>
+                  </div>
+                  <div class="text-[12px] flex justify-between text-center">
+                    <span class="text-[12px] font-[400] italic">
+                      {{ format.toDay(item.block?.header?.time, 'from') }}
+                    </span>
+                    <span>
+                      {{ item.block?.data?.txs.length }} Transactions
+                    </span>
+                  </div>
+                  <div class="text-[12px] flex justify-between text-center">
+                    <span>
+                      Reward {{ item.block?.data?.txs.length * 0.002 }}
+                      <!-- {{ format.validator(item.block?.header?.proposer_address) }} -->
+                    </span>
+                    <span>
+                      {{ getTxs(item) }} novai
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+            </RouterLink>
+            </div>
+            
+            </div>
+          </div>
+          
+          </div>
+          <!-- <div class="flex flex-1  flex-wrap  px-[24px]  grid grid-cols-1  md:!grid-cols-2 lg:!grid-cols-3">
             <RouterLink v-for="(item, key) in blocksList" :key="key"
               class="py-[5px] md:py-[10px] w-[100%] md:w-[50%] lg:w-[33.33%] text-[#999999] text-sm font-medium text-center lg:!text-left"
               :to="`/${chain}/block/${item.block.header.height}`">
@@ -404,34 +494,43 @@ getApTokenPrices()
                 </div>
               </div>
 
-            </RouterLink>
-          </div>
+            </RouterLink> 
+          </div>-->
         </div>
       </div>
-      <div class="  text-[#ffffff] border border-[#FFFFFF]/[.16]
+    </div>
+
+    <div class="grid mt-[10px] lg:!flex-row grid-cols-1 lg:!grid-cols-3 gap-[10px]">
+      <div class="lg:!col-span-2 min-h-[100%]">
+        <RecentTransaction :chain="props.chain" />
+      </div>
+     
+      <div class="lg:!col-span-1  text-[#ffffff] border border-[#FFFFFF]/[.16]
       bg-[#131315]/[.8] rounded-[16px]">
         <div class="border-b border-[#FFFFFF]/[.16]
            md:pl-[24px] md:pt-[16px] md:pb-[13px] 
            pl-[12px] pt-[8px] pb-[8px]
           text-[14px] 
           font-[OrbitronMedium] tracking-[.5px]">7 days of price records</div>
-        <div id="chart" class="" style="height: 100%; 
-        min-height: 166px">
+        <!-- <div id="chart" class="" style="height: 100%; 
+        min-height: 166px max-height: 310px;">
           <ApexCharts type="area" height="100%" :options="chartOptions" :series="series"></ApexCharts>
+        </div> -->
+        <div style="height: 100%; min-height: 166px; max-height: 290px;">
+<div id="chart" style="height: 100%;">
+          <ApexCharts type="area" height="100%" :options="chartOptions" :series="series"></ApexCharts>
+        </div>
         </div>
       </div>
     </div>
-    <div>
-
-    </div>
 
 
 
-    <div class="mt-[10px] border-[#FFFFFF]/[.16]
+    <!-- <div class="mt-[10px] border-[#FFFFFF]/[.16]
       bg-[#131315]/[.8] rounded-[16px]">
 
       <RecentTransaction :chain="props.chain" />
-    </div>
+    </div> -->
 
 
   </div>

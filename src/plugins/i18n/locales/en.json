@@ -20,7 +20,11 @@
     "all_blockchains": "All Blockchain",
     "sponsors": "Sponsors",
     "links": "Links",
-    "contract":"contract"
+    "contract":"contract",
+    "total_accounts": "Total accounts",
+    "total_value_locked":"Total Value locked", 
+    "total_transactions":"Total transactions",
+    "total_transfer_volume":"Total Transfer Volume" 
   },
   "search": {
     "title":"Novai Chain Block Explorer"

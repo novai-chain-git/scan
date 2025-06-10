@@ -4,8 +4,14 @@ import { useFormatter } from '@/stores';
 import { Interface, JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { toReadableAmount } from '@/libs/utils';
 import { addresses, GetContract, getFormatUnits } from '@/libs/web3/index';
-import { nusdtAbi, NovaiFaucetAbi, bonstakeAbi , uniswap, swapNai } from '@/libs/web3/abi/index';
-import { post } from "@/libs"
+import {
+  nusdtAbi,
+  NovaiFaucetAbi,
+  bonstakeAbi,
+  uniswap,
+  swapNai,
+} from '@/libs/web3/abi/index';
+import { post } from '@/libs';
 
 import dayjs from 'dayjs';
 import {
@@ -29,7 +35,7 @@ const form = computed(() => {
       attributes = raw_log.find((item) => {
         return item.type === 'message';
       });
-    } catch (error) { }
+    } catch (error) {}
     if (attributes && attributes.attributes.length) {
       let sender = attributes.attributes.find((item) => {
         return item.key === 'sender' && item.value.indexOf('novaichain') === -1;
@@ -46,7 +52,7 @@ const msgIndex = computed(() => {
     try {
       let raw_log: [any] = JSON.parse(props.tx.tx_response.raw_log);
       index = raw_log[0].msg_index;
-    } catch (error) { }
+    } catch (error) {}
   }
   return index;
 });
@@ -58,22 +64,15 @@ const objValue = computed(() => {
     to?: string;
     value?: any;
     nonce?: string;
-    data?: string
+    data?: string;
   } = { to: '', value: '0' };
   if (props.tx?.tx_response?.tx?.body) {
     let messages: [any] = props.tx.tx_response.tx.body.messages;
 
     if (messages.length) {
       obj = messages[0].data ? messages[0].data : {};
-
-      // obj.value = obj.value?formatter.format(Number(obj.value)):''
-
     }
   }
-  // if(obj.value){
-  //   console.log(getAmount(obj.value),'getAmount(obj.value)')
-  //      obj.value = getAmount(obj.value)
-  //     }
   return obj;
 });
 
@@ -91,7 +90,6 @@ function mapAmount(
           ? x.value
           : String.fromCharCode(...fromBase64(x.value ?? ''));
 
-  
       let str = num.match(/^(\d+)(\D*)$/);
       if (str?.length) {
         return `${Number(formatUnits(str[1], 18)).toFixed(6)} ${str[2]}`;
@@ -102,7 +100,7 @@ function mapAmount(
     });
 }
 
-function getAmount(value: any, num:number = 18) {
+function getAmount(value: any, num: number = 18) {
   if (value) return Number(Number(formatUnits(value, num)).toFixed(6));
   return ``;
 }
@@ -137,82 +135,67 @@ const abi = [
   'function decimals() view returns (uint8)',
 ];
 
-
-
-
-
-
-
-
-
 const NovaiFaucetData = reactive({
   type: false,
-  value:'0' 
-})
+  value: '0',
+});
 const transData = reactive({
   value: '0',
   to: '',
   tokenName: '',
   showErc20: false,
   decimals: '',
-  name:""
+  name: '',
 });
 
 const BonstakeData = reactive({
   type: false,
-  value:'0' 
-})
+  value: '0',
+});
 const swapData = reactive({
-  address: "",
+  address: '',
   to: '',
-  form: "",
-  toAddress: "",
-  formAddress: "",
+  form: '',
+  toAddress: '',
+  formAddress: '',
   decimals: '',
-  time: "",
-  automation:false,
-  showSwap: false
+  time: '',
+  automation: false,
+  showSwap: false,
 });
 
 //1155查询
 const get1155 = reactive({
-  show1155: false
-})
-const getEventsByInfo = ref<any>('')
+  show1155: false,
+});
+const getEventsByInfo = ref<any>('');
 
 const provider = new JsonRpcProvider('https://rpc.novaichain.com');
 const contract = computed(() => {
   return new Contract(objValue.value.to!, abi, provider);
-
-});
-const swapContract = computed(() => {
-  return new Contract(objValue.value.to!, uniswap, provider);
-
 });
 
-const getInterface = (address?: string) =>{
+const getInterface = (address?: string): Interface => {
   switch (address) {
     case addresses.Bonstake:
-      return new Interface(bonstakeAbi)
+      return new Interface(bonstakeAbi);
     case addresses.NovaiFaucet:
       return new Interface(NovaiFaucetAbi);
     case addresses.novaichain:
-      return  new Interface(nusdtAbi)
-      //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
+      return new Interface(nusdtAbi);
+    //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
     case addresses.UniswapV2Router01:
-      return new Interface(uniswap)    
+      return new Interface(uniswap);
     case addresses.nAI_UniSwap:
-      return new Interface(swapNai)
+      return new Interface(swapNai);
     default:
       return new Interface(abi);
-      //const ifaceUniswap = new Interface(uniswap);
-
+    //const ifaceUniswap = new Interface(uniswap);
   }
-}
+};
 
 async function getTokenInfo(value: any) {
   try {
-
     const name = await contract.value.name();
     const decimals = await contract.value.decimals();
     transData.tokenName = name;
@@ -222,23 +205,21 @@ async function getTokenInfo(value: any) {
     console.log('getTokenInfo error：', error);
   } finally {
     transData.showErc20 = true;
-   
   }
 }
 async function GetEventsByTxHash() {
   try {
     let { data } = await post('/chainFinder/api/GetEventsByTxHash', {
       TxHash: props.hash,
-    })
-    if(data.contractData[0] && data.contractData[0].eventName == 'ERC1155'){
-      get1155.show1155 = true
+    });
+    if (data.contractData[0] && data.contractData[0].eventName == 'ERC1155') {
+      get1155.show1155 = true;
     }
-    getEventsByInfo.value = data
-    console.log(data,'data')
+    getEventsByInfo.value = data;
+    console.log(data, 'data');
   } catch (error) {
     console.log('getTokenInfo error：', error);
   } finally {
-  //  transData.showErc20 = true;
   }
 }
 
@@ -246,67 +227,48 @@ async function parseErc20Data() {
   try {
     const base64Data = fromBase64(props.tx.tx.body.messages[0].data.data);
     var hexData = toHex(base64Data);
-  //  console.log(hexData, 'hexData')
     let bus: any = props.tx.tx.body.messages[0]?.data.to;
-    let transactionData: any = ''
-    if(bus === addresses.Bonstake){
-
+    let transactionData: any = '';
+    console.log(bus,'busbusbus')
+    if (bus === addresses.Bonstake) {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
-      })
-      console.log(transactionData,'transactionData')
-   //   
-      BonstakeData.type = true
-      BonstakeData.value = transactionData.args[0]
-      // let decimalsTo = await GetContract(bus,bonstakeAbi).decimals()
-      // console.log(decimalsTo,'decimalsTo')
+      });
+      BonstakeData.type = true;
+      BonstakeData.value = transactionData.args[0];
       return;
-    } 
-
-    if(bus === addresses.NovaiFaucet){
+    }
+    if (bus === addresses.NovaiFaucet) {
       transactionData = getInterface(addresses.NovaiFaucet)?.parseTransaction({
         data: `0x${hexData}`,
-      })
-      NovaiFaucetData.type = true
-      getNovaiFaucet(transactionData.args)
+      });
+      NovaiFaucetData.type = true;
+      getNovaiFaucet(transactionData.args);
       return;
     } else if (bus === addresses.novaichain) {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
-  //    console.log(transactionData,'transactionData')
-      // console.log(transactionData.name,'transactionData')
-      // GetContract(bus,nusdtAbi)[transactionData.name]().then(res =>{
-      // console.log(res,'res')
-    // })
-    } else if (bus === addresses.UniswapV2Router01) {  
-
+    } else if (
+      bus === addresses.UniswapV2Router01 ||
+      bus === addresses.nAI_UniSwap
+    ) {
       transactionData = getInterface(bus)?.parseTransaction({
         data: `0x${hexData}`,
       });
-      getSwapInfo(transactionData.args)
-      return;
-    } else if(bus === addresses.nAI_UniSwap){
-
-      transactionData = getInterface(bus)?.parseTransaction({
-        data: `0x${hexData}`,
-      });
-      getSwapNai(transactionData.args)
+      getSwapInfo(transactionData.args);
       return;
     } else {
-      GetEventsByTxHash()
+      GetEventsByTxHash();
       transactionData = getInterface().parseTransaction({
         data: `0x${hexData}`,
       });
-     // transData.name = transactionData.name
     }
 
     if (!transactionData) {
       return;
     }
-    
-    transData.name = transactionData.name
-    //GetContract(transactionData,transactionData.fragment)
+    transData.name = transactionData.name;
     transData.to = transactionData.args[0];
     getTokenInfo(transactionData.args[1]);
   } catch (error) {
@@ -316,83 +278,90 @@ async function parseErc20Data() {
 
 //取水龙头已
 async function getNovaiFaucet(args: any) {
- // debugger
+  // debugger
   //console.log(args,'args')
   let bus: any = props.tx.tx.body.messages[0]?.data.to;
- //let decimalsTo = await GetContract(bus,NovaiFaucetAbi).decimals()
- //let nameTo = await GetContract(bus,NovaiFaucetAbi).Transfer()
- //console.log(nameTo,'decimalsTo')
- NovaiFaucetData.value = args[1]
+  //let decimalsTo = await GetContract(bus,NovaiFaucetAbi).decimals()
+  //let nameTo = await GetContract(bus,NovaiFaucetAbi).Transfer()
+  //console.log(nameTo,'decimalsTo')
+  NovaiFaucetData.value = args[1];
 }
-
 
 //swap
+// async function getSwapNai(args: any) {
+
+//   try {
+//     console.log(args,'args')
+//     let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
+//     if(args.length == 5){
+//       decimalsTo = await GetContract(args[2][0],swapNai).decimals()
+//       console.log(decimalsTo,'decimalsTo')
+//      nameTo = await GetContract(args[2][0],swapNai).name()
+//      numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
+//     }
+//     let decimalsForm = await GetContract(args[args.length == 5?2:1][1],swapNai).decimals()
+//     let nameForm = await GetContract(args[args.length == 5?2:1][1],swapNai).name()
+
+//     let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
+
+//     swapData.address = args[ args.length == 5?3:2];
+//     swapData.time = format.toDay(Number(args[args.length == 5?4:3]) * 1000)
+
+//     swapData.to = `${numTo} ${nameTo}`
+//     swapData.form = `${numform} ${nameForm}`
+//     swapData.toAddress = args[2][0]
+//     swapData.formAddress = args[2][1]
+//     swapData.automation = args.length == 5
+//     swapData.showSwap = true;
+//   } finally {
+
+//   }
+// }
+
 async function getSwapInfo(args: any) {
-
   try {
-    console.log(args,'args')
-    let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
-    if(args.length == 5){
-      decimalsTo = await GetContract(args[2][0],swapNai).decimals()
-      console.log(decimalsTo,'decimalsTo')
-     nameTo = await GetContract(args[2][0],swapNai).name()
-     numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
+    let decimalsTo = 'nameTo',
+      nameTo = '',
+      numTo: any = 0;
+    if (args.length == 5) {
+      decimalsTo = await GetContract(args[2][0]).decimals();
+      nameTo = await GetContract(args[2][0]).name();
+      numTo = getFormatUnits(args[0], decimalsTo).toFixed(6);
     }
-    let decimalsForm = await GetContract(args[args.length == 5?2:1][1],swapNai).decimals()
-    let nameForm = await GetContract(args[args.length == 5?2:1][1],swapNai).name()
+    let decimalsForm = await GetContract(
+      args[args.length == 5 ? 2 : 1][1]
+    ).decimals();
+    let nameForm = await GetContract(args[args.length == 5 ? 2 : 1][1]).name();
 
-     
-    let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
-
-    swapData.address = args[ args.length == 5?3:2];
-    swapData.time = format.toDay(Number(args[args.length == 5?4:3]) * 1000)
-
-    swapData.to = `${numTo} ${nameTo}`
-    swapData.form = `${numform} ${nameForm}`
-    swapData.toAddress = args[2][0]
-    swapData.formAddress = args[2][1]
-    swapData.automation = args.length == 5
+    let numform = getFormatUnits(
+      args[args.length == 5 ? 1 : 0],
+      decimalsForm
+    ).toFixed(6);
+    swapData.address = args[args.length == 5 ? 3 : 2];
+    swapData.time = format.toDay(Number(args[args.length == 5 ? 4 : 3]) * 1000);
+ 
+    swapData.to = `${numTo} ${nameTo}`;
+    swapData.form = `${numform} ${nameForm}`;
+    swapData.toAddress = args[args.length == 5 ? 2 : 1][0];
+    swapData.formAddress = args[args.length == 5 ? 2 : 1][1];
+    swapData.automation = args.length == 5;
     swapData.showSwap = true;
   } finally {
-   
   }
-}
-
-async function getSwapNai(args: any) {
-
-try {
-  let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
-  if(args.length == 5){
-    decimalsTo = await GetContract(args[2][0]).decimals()
-   nameTo = await GetContract(args[2][0]).name()
-   numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
-  }
-  let decimalsForm = await GetContract(args[args.length == 5?2:1][1]).decimals()
-  let nameForm = await GetContract(args[args.length == 5?2:1][1]).name()
-
-   
-  let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
-
-  swapData.address = args[ args.length == 5?3:2];
-  swapData.time = format.toDay(Number(args[args.length == 5?4:3]) * 1000)
-
-  swapData.to = `${numTo} ${nameTo}`
-  swapData.form = `${numform} ${nameForm}`
-  swapData.toAddress = args[2][0]
-  swapData.formAddress = args[2][1]
-  swapData.automation = args.length == 5
-  swapData.showSwap = true;
-} finally {
- 
-}
 }
 parseErc20Data();
 </script>
 <template>
   <div class="">
     <div v-if="tx.tx_response">
-      <div class="text-[#ffffff] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4   mb-4">
-        <h2 class="card-title truncate mb-2  text-[14px] font-[400] font-[OrbitronMedium] tracking-[.5px]">{{ $t('tx.title') }}</h2>
+      <div
+        class="text-[#ffffff] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4 mb-4"
+      >
+        <h2
+          class="card-title truncate mb-2 text-[14px] font-[400] font-[OrbitronMedium] tracking-[.5px]"
+        >
+          {{ $t('tx.title') }}
+        </h2>
         <div>
           <table class="table text-sm">
             <tbody>
@@ -405,12 +374,22 @@ parseErc20Data();
               <tr>
                 <td>{{ $t('tx.Status') }}</td>
                 <td>
-                  <span class="text-xs truncate relative py-1 px-4 w-fit mr-2 " 
-                  :class="`${tx.tx_response.code === 0 ? ' text-[#B2E235]' : 'text-error'
-                    }`">
-                    <span class="inset-x-0 inset-y-0  absolute rounded-full"
-                     :class="`${tx.tx_response.code === 0 ? ' bg-[#5AC27C]/[.3]' : 'bg-error/[.3]'
-                      }`"></span>
+                  <span
+                    class="text-xs truncate relative py-1 px-4 w-fit mr-2"
+                    :class="`${
+                      tx.tx_response.code === 0
+                        ? ' text-[#B2E235]'
+                        : 'text-error'
+                    }`"
+                  >
+                    <span
+                      class="inset-x-0 inset-y-0 absolute rounded-full"
+                      :class="`${
+                        tx.tx_response.code === 0
+                          ? ' bg-[#5AC27C]/[.3]'
+                          : 'bg-error/[.3]'
+                      }`"
+                    ></span>
                     {{ tx.tx_response.code === 0 ? 'Success' : 'Failed' }}
                   </span>
                   <!-- <span>
@@ -441,32 +420,37 @@ parseErc20Data();
               <tr v-if="transData.showErc20">
                 <td>{{ $t('tx.Transferred') }}</td>
                 <td>
-                  <div v-if="transData.name == 'transferFrom' || transData.name == 'transfer'">
-                    <div class="bg-transparent tabs-boxed ">
-                    {{ $t('tx.From') }}：
-                    <span class="textjb-lv">
-                      <RouterLink :to="`/${chain}/account/${form}`">{{
-                        form
-                      }}</RouterLink>
-                    </span><br />
-                    {{ $t('tx.To') }}：
-                    <span class="textjb-lv">
-                      <RouterLink :to="`/${chain}/account/${transData.to}`">{{
-                        transData.to
-                      }}</RouterLink>
-                    </span><br />
-                    <span class="">For</span> {{ transData.value }}
-                    {{ transData.tokenName }}
+                  <div
+                    v-if="
+                      transData.name == 'transferFrom' ||
+                      transData.name == 'transfer'
+                    "
+                  >
+                    <div class="bg-transparent tabs-boxed">
+                      {{ $t('tx.From') }}：
+                      <span class="textjb-lv">
+                        <RouterLink :to="`/${chain}/account/${form}`">{{
+                          form
+                        }}</RouterLink> </span
+                      ><br />
+                      {{ $t('tx.To') }}：
+                      <span class="textjb-lv">
+                        <RouterLink :to="`/${chain}/account/${transData.to}`">{{
+                          transData.to 
+                        }}</RouterLink> </span
+                      ><br />
+                      <span class="">For</span> {{ transData.value }}
+                      {{ transData.tokenName }}
+                    </div>
                   </div>
-                  </div>
-                  
+
                   <div v-else>
                     {{ $t('tx.method') }}： {{ transData.name }}
-                    <br/>
+                    <br />
                     <span class="">For</span> {{ transData.value }}
                     {{ transData.tokenName }}
                   </div>
-                  
+
                   {{ format.toLocaleDate(tx.tx_response.timestamp) }} ({{
                     format.toDay(tx.tx_response.timestamp, 'from')
                   }})
@@ -475,38 +459,38 @@ parseErc20Data();
               <tr v-if="swapData.showSwap">
                 <td>{{ $t('tx.swap') }}</td>
                 <td>
-                  <div class="bg-transparent tabs-boxed ">
-                    <!-- {{ $t('tx.From') }}：
-                    <span class="text-primary">
-                      <RouterLink :to="`/${chain}/account/${form}`">{{
-                        form
-                        }}</RouterLink>
-                    </span><br /> -->
-
+                  <div class="bg-transparent tabs-boxed">
                     <span>{{ $t('tx.issue') }}：</span>
                     <span class="textjb-lv" v-if="swapData.automation">
-                      <RouterLink :to="`/${chain}/token/${swapData.toAddress}`">{{
-                        swapData.to
-                      }}</RouterLink>
+                      <RouterLink
+                        :to="`/${chain}/token/${swapData.toAddress}`"
+                        >{{ swapData.to }}</RouterLink
+                      >
                     </span>
-                    <span v-else>{{ objValue.value ? getAmount(objValue.value) : objValue.value }}NOVAI</span>
+                    <span v-else
+                      >{{
+                        objValue.value
+                          ? getAmount(objValue.value)
+                          : objValue.value
+                      }}NOVAI</span
+                    >
                     <br />
                     <span>{{ $t('tx.receive') }}：</span>
                     <span class="textjb-lv">
-                      <RouterLink :to="`/${chain}/token/${swapData.formAddress}`">{{
-                        swapData.form
-                      }}</RouterLink>
+                      <RouterLink
+                        :to="`/${chain}/token/${swapData.formAddress}`"
+                        >{{ swapData.form }}</RouterLink
+                      >
                     </span>
                     <br />
                     {{ $t('tx.To') }}：
                     <span class="textjb-lv">
-                      <RouterLink :to="`/${chain}/account/${swapData.address}`">{{
-                        swapData.address
-                      }}</RouterLink>
-                    </span><br />
+                      <RouterLink
+                        :to="`/${chain}/account/${swapData.address}`"
+                        >{{ swapData.address }}</RouterLink
+                      > </span
+                    ><br />
                     <span>{{ $t('tx.deadline') }}:</span> {{ swapData.time }}
-
-
                   </div>
                   {{ format.toLocaleDate(tx.tx_response.timestamp) }} ({{
                     format.toDay(tx.tx_response.timestamp, 'from')
@@ -514,30 +498,57 @@ parseErc20Data();
                 </td>
               </tr>
               <tr v-if="get1155.show1155">
-                <td>{{getEventsByInfo.contractData[0]?.eventName}}</td>
+                <td>{{ getEventsByInfo.contractData[0]?.eventName }}</td>
                 <td>
-                  {{ getEventsByInfo.contractData[0]?.data.to == '0x0000000000000000000000000000000000000000'?$t('account.Burn'):$t('account.Transfer')}}
+                  {{
+                    getEventsByInfo.contractData[0]?.data.to ==
+                    '0x0000000000000000000000000000000000000000'
+                      ? $t('account.Burn')
+                      : $t('account.Transfer')
+                  }}
                   <br />
-                  <span>ID:{{ getEventsByInfo.contractData[0]?.data.id }}</span><br />
-          
-                  <span>value:{{ getEventsByInfo.contractData[0]?.data.value }}</span> <br />
-                  <span v-show="getEventsByInfo.contractData[0]?.data.to != '0x0000000000000000000000000000000000000000'">to:{{ getEventsByInfo.contractData[0]?.data.to}}</span>
-                </td>  
+                  <span>ID:{{ getEventsByInfo.contractData[0]?.data.id }}</span
+                  ><br />
+
+                  <span
+                    >value:{{
+                      getEventsByInfo.contractData[0]?.data.value
+                    }}</span
+                  >
+                  <br />
+                  <span
+                    v-show="
+                      getEventsByInfo.contractData[0]?.data.to !=
+                      '0x0000000000000000000000000000000000000000'
+                    "
+                    >to:{{ getEventsByInfo.contractData[0]?.data.to }}</span
+                  >
+                </td>
               </tr>
               <tr>
                 <td>{{ $t('tx.Value') }}</td>
                 <td>
-                  <span v-if="transData.showErc20 && (transData.name == 'transferFrom' || transData.name == 'transfer')">
+                  <span
+                    v-if="
+                      transData.showErc20 &&
+                      (transData.name == 'transferFrom' ||
+                        transData.name == 'transfer')
+                    "
+                  >
                     {{ transData.value }}
                   </span>
-                  <span v-else-if="NovaiFaucetData.type ">
+                  <span v-else-if="NovaiFaucetData.type">
                     {{ getAmount(NovaiFaucetData.value) }}
                   </span>
                   <span v-else-if="BonstakeData.type">
-                    {{ getAmount(BonstakeData.value,6) }}
+                    {{ getAmount(BonstakeData.value, 6) }}
                   </span>
                   <span v-else>
-                    {{ objValue.value ? getAmount(objValue.value) : objValue.value }}
+                    {{
+                      objValue.value
+                        ? getAmount(objValue.value)
+                        : objValue.value
+                    }}
                   </span>
                 </td>
               </tr>
@@ -553,23 +564,29 @@ parseErc20Data();
           </table>
         </div>
       </div>
-      <div class="text-[#ffffff] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4 shadow mb-4">
+      <div
+        class="text-[#ffffff] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4 shadow mb-4"
+      >
         <div v-if="tx.tx_response">
-          <div class="max-h-[0px] overflow-hidden" style="transition: all 0.3s" :class="{ '  !max-h-dvh': launch }">
+          <div
+            class="max-h-[0px] overflow-hidden"
+            style="transition: all 0.3s"
+            :class="{ '  !max-h-dvh': launch }"
+          >
             <table class="table text-sm">
               <tbody>
                 <tr class="w-[80px] lg:w-[240px]">
                   <td class="w-[240px]">{{ $t('tx.Gas') }}</td>
-                  <td> {{ gas }}&nbsp;|&nbsp;{{ gas }} (100%)</td>
+                  <td>{{ gas }}&nbsp;|&nbsp;{{ gas }} (100%)</td>
                 </tr>
                 <tr class="!border-none">
                   <td class="w-[240px]">{{ $t('tx.OtherAttributes') }}</td>
                   <td>
-                    <div class="tabs ">
-                      <div class="h-6 px-5  rounded-full">
+                    <div class="tabs">
+                      <div class="h-6 px-5 rounded-full">
                         {{ $t('tx.Nonce') }}:{{ objValue.nonce }}
                       </div>
-                      <div class="h-6 ml-2 px-5  rounded-full">
+                      <div class="h-6 ml-2 px-5 rounded-full">
                         {{ $t('tx.PositionInBlock') }}:{{ msgIndex }}
                       </div>
                     </div>
@@ -578,7 +595,7 @@ parseErc20Data();
                 <tr class="!border-b border-[#ffffff]/[0.16]">
                   <td class="w-[240px]">{{ $t('tx.InputData') }}</td>
                   <td>
-                    <div class="tabs ">
+                    <div class="tabs">
                       <!--                    <div class="h-6 px-5 bg-[#f7f7f7] rounded-full">{{ format.toLocaleDate(tx.tx_response.timestamp) }} </div>-->
                       <!--                    <div class="h-6 px-5 ml-2 bg-[#f7f7f7] rounded-full">({{-->
                       <!--                        format.toDay(tx.tx_response.timestamp, 'from')-->
@@ -591,7 +608,10 @@ parseErc20Data();
           </div>
           <table class="table text-sm">
             <tbody>
-              <tr @click="launch = !launch" class="!border-none w-[80px] lg:w-[240px]">
+              <tr
+                @click="launch = !launch"
+                class="!border-none w-[80px] lg:w-[240px]"
+              >
                 <td class="w-[240px]">{{ $t('tx.MoreDetails') }}</td>
                 <td class="textjb-lv" style="cursor: pointer">
                   <span :class="{ hidden: !launch }">

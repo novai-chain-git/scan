@@ -148,7 +148,7 @@ export const useIndexModule = defineStore('module-index', {
       const staking = useStakingStore();
       const mintStore = useMintStore();
       const formatter = useFormatter();
-
+      console.log(this.pool.bonded_tokens,'this.pool.bonded_tokens')
       return [
         {
           title: 'Height',

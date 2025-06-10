@@ -8,7 +8,8 @@ import DynamicComponent from '@/components/dynamic/DynamicComponent.vue';
 import { onBeforeRouteUpdate } from 'vue-router';
 import type { Block } from '@/types';
 import Countdown from '@/components/Countdown.vue';
-import {  formatUnits } from 'ethers';
+import { formatUnits } from 'ethers';
+import FormItem from './FormItem.vue';
 
 const props = defineProps(['chain']);
 const base = useBaseStore();
@@ -94,27 +95,55 @@ const switchTimes = () => {
 };
 
 const getTxsInRecents = computed(() => {
-  if(base.getLoging) return [];
+  if (base.getLoging) return [];
+  return base.getTransactions.slice(-4);
+});
+const getTxsInRecent = computed(() => {
+  if (base.getLoging) return [];
   return base.getTransaction.slice(-20);
-})
+});
+
+// const getForm = (tx) => {
+//   if (props.tx.tx_response && props.tx.tx_response.raw_log) {
+//     let attributes: { attributes: any[] } = { attributes: [] };
+//     try {
+//       let raw_log: [any] = JSON.parse(props.tx.tx_response.raw_log)[0].events;
+//       attributes = raw_log.find((item) => {
+//         return item.type === 'message';
+//       });
+//     } catch (error) {}
+//     if (attributes && attributes.attributes.length) {
+//       let sender = attributes.attributes.find((item) => {
+//         return item.key === 'sender' && item.value.indexOf('novaichain') === -1;
+//       })?.value;
+//       return sender;
+//     }
+//     return '';
+//   }
+//   return '';
+// };
 </script>
 <template>
-  <div class="border border-[#FFFFFF]/[.16] text-[#ffffff]
-      bg-[#131315] rounded-[16px]">
+  <div
+    class="border border-[#FFFFFF]/[.16] text-[#ffffff] bg-[#131315] rounded-[16px] min-h-[100%]"
+  >
     <div
-      class=" border-b border-[#FFFFFF]/[.16]
-           md:pl-[24px] md:pt-[16px] md:pb-[13px] 
-           pl-[12px] pt-[8px] pb-[8px]
-          text-[14px] 
-          font-[OrbitronMedium] tracking-[.5px]"
+      class="border-b border-[#FFFFFF]/[.16] md:pl-[24px] md:pt-[16px] md:pb-[13px] pl-[12px] pt-[8px] pb-[8px] text-[14px] font-[OrbitronMedium] tracking-[.5px]"
     >
-    {{ $t('account.recent_transaction') }}
+      {{ $t('account.recent_transaction') }}
     </div>
-    <div class="   ">
+    <div class="min-h-[200px]">
+      <div>
+        <div v-for="(item, index) in getTxsInRecents" :key="index">
+          <FormItem :tx="item" :chain="props.chain" :key="index"></FormItem>
+        </div>
+      </div>
+    </div>
+    <!-- <div class="   ">
       <div class="overflow-auto h-full">
         <table class="table w-full table-compact">
           <thead>
-            <tr class=" border-[#FFFFFF]/[.16] text-[12px] text-[#ffffff]/[.54]">
+            <tr class="border-[#FFFFFF]/[.16] text-[12px] text-[#ffffff]/[.54]">
               <th style="position: relative; z-index: 2" class="font-[400]">
                 {{ $t('account.height') }}
               </th>
@@ -127,8 +156,11 @@ const getTxsInRecents = computed(() => {
               <th class="font-[400]">{{ $t('block.fees') }}</th>
             </tr>
           </thead>
-          <tbody >
-            <tr class="border-b-[1px] border-[#FFFFFF]/[.16] border-dashed" v-if="getTxsInRecents.length === 0">
+          <tbody>
+            <tr
+              class="border-b-[1px] border-[#FFFFFF]/[.16] border-dashed"
+              v-if="getTxsInRecent.length === 0"
+            >
               <td colspan="10">
                 <div class="text-center">
                   {{ $t('account.loading') }}
@@ -136,83 +168,110 @@ const getTxsInRecents = computed(() => {
               </td>
             </tr>
             <tr
-              v-for="(item, index) in getTxsInRecents"
-              :index="index"
-              class="border-b-[1px]  border-[#FFFFFF]/[.16] border-dashed hover:bg-[transparent] dark:hover:bg-[#384059]
-               text-[#ffffff]/[.87]  h-[64px]"
+              v-for="(item, index) in getTxsInRecent"
+              :key="index"
+              class="border-b-[1px] border-[#FFFFFF]/[.16] border-dashed hover:bg-[transparent] dark:hover:bg-[#384059] text-[#ffffff]/[.87] h-[64px]"
             >
               <td class="text-sm textjb-lv">
                 <RouterLink :to="`/${props.chain}/block/${item.height}`">{{
                   item.height
                 }}</RouterLink>
               </td>
-              <td class="truncate font-[OrbitronMedium] textjb-lv max-w-[125px]">
+              <td
+                class="truncate font-[OrbitronMedium] textjb-lv max-w-[125px]"
+              >
                 <RouterLink :to="`/${props.chain}/tx/${item.hash}`">{{
                   item.hash
                 }}</RouterLink>
               </td>
               <td>
-                {{ format.messages(item.tx.body.messages) }}</td>
-              <td  >
-                
-                
-                <template v-if="!item?.methodName || item.methodName  == 'transferFrom' || item.methodName == 'transfer'">
-                  <template v-if="item.to || item.form ">
-                    {{item.automation?item.to:item.value?item.value:getAmount(item.objValue.value)}}<br/>
+                {{ format.messages(item.tx.body.messages) }}
+              </td>
+              <td>
+                <template
+                  v-if="
+                    !item?.methodName ||
+                    item.methodName == 'transferFrom' ||
+                    item.methodName == 'transfer'
+                  "
+                >
+                  <template v-if="item.to || item.form">
+                    {{
+                      item.automation
+                        ? item.to
+                        : item.value
+                        ? item.value
+                        : getAmount(item.objValue.value)
+                    }}<br />
                     <span>
-                      {{item.form}}
+                      {{ item.form }}
                     </span>
                   </template>
                   <span v-else>
-                  <!-- {{ item.value?item.value:getAmount(item.objValue.value) }} -->
-                  <template v-if="Number(item.value) || item.transactionType">{{ item.value }}</template>
+                    <template
+                      v-if="Number(item.value) || item.transactionType"
+                      >{{ item.value }}</template
+                    >
 
                     <template v-else>
-                      {{ item.objValue.value == 0 && Number(item.tx_response.gas_used) > 40000 ?  $t("account.ContractCall") : getAmount(item.objValue.value) }}
+                      {{
+                        item.objValue.value == 0 &&
+                        Number(item.tx_response.gas_used) > 40000
+                          ? $t('account.ContractCall')
+                          : getAmount(item.objValue.value)
+                      }}
                     </template>
                   </span>
                 </template>
                 <template v-else>
-                  {{item.methodName}}
-                 </template>
+                  {{ item.methodName }}
+                </template>
               </td>
 
-              <td :class="[item.name || item.to?'truncate ':''] " >
+              <td :class="[item.name || item.to ? 'truncate ' : '']">
                 <template v-if="item.to || item.form">
-                  <RouterLink class="textjb-lv" v-if="item.automation" :to="`/${props.chain}/token/${item.toAddress}`">
-                    {{item.nameTo}}
+                  <RouterLink
+                    class="textjb-lv"
+                    v-if="item.automation"
+                    :to="`/${props.chain}/token/${item.toAddress}`"
+                  >
+                    {{ item.nameTo }}
                   </RouterLink>
                   <span v-else>NOVAI</span>
-                  <br/>
-                  <RouterLink v-if="item.nameForm != 'NOVAI'" class="textjb-lv" :to="`/${props.chain}/token/${item.formAddress}`">
-                    {{item.nameForm}}
+                  <br />
+                  <RouterLink
+                    v-if="item.nameForm != 'NOVAI'"
+                    class="textjb-lv"
+                    :to="`/${props.chain}/token/${item.formAddress}`"
+                  >
+                    {{ item.nameForm }}
                   </RouterLink>
                   <span v-else>{{ item.nameForm }}</span>
-               </template>
-                <RouterLink class="textjb-lv" v-else-if="item.name " :to="`/${props.chain}/token/${item.objValue.to}`">{{
-                                item.name
-                                }}</RouterLink>
+                </template>
+                <RouterLink
+                  class="textjb-lv"
+                  v-else-if="item.name"
+                  :to="`/${props.chain}/token/${item.objValue.to}`"
+                  >{{ item.name }}</RouterLink
+                >
                 <span v-else-if="!item.name && !item.to">
-                  {{!item.name && !item.to? "NOVAI":""}}
+                  {{ !item.name && !item.to ? 'NOVAI' : '' }}
                 </span>
-                    
               </td>
 
-              <td>{{ format.formatTokens(item.tx.authInfo.fee?.amount,true,) }}</td>
+              <td>
+                {{ format.formatTokens(item.tx.authInfo.fee?.amount, true) }}
+              </td>
             </tr>
           </tbody>
         </table>
-
       </div>
-      <div v-if="!base.getLoging">
-
-      </div>
-    </div>
-    <div class="text-center text-[#ffffff] py-4">
+      <div v-if="!base.getLoging"></div>
+    </div> -->
+    <div class="text-center text-[#ffffff] py-[5px]">
       <router-link to="/novaichain/block" class="underline">
         {{ $t('MORE') }}
       </router-link>
     </div>
   </div>
 </template>
-

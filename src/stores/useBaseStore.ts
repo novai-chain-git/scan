@@ -1,23 +1,31 @@
 import { defineStore } from 'pinia';
 import { useBlockchain } from '@/stores';
 import { decodeTxRaw, type DecodedTxRaw } from '@cosmjs/proto-signing';
-import { addresses, GetContract,getFormatUnits } from '@/libs/web3/index';
-import {  formatUnits} from 'ethers';
+import { addresses, GetContract, getFormatUnits } from '@/libs/web3/index';
+import { formatUnits } from 'ethers';
 import dayjs from 'dayjs';
 import type { Block, Tx, TxResponse } from '@/types';
 import { hashTx } from '@/libs';
 import { fromBase64, toHex } from '@cosmjs/encoding';
 import { useRouter } from 'vue-router';
-import { get } from '@/libs';
+import { get, post } from '@/libs';
 import { Interface } from 'ethers';
-import { nusdtAbi, uniswap } from '@/libs/web3/abi/index';
-import { formatNumberWithCommas } from "@/libs/utils"
+import { toReadableAmount } from '@/libs/utils';
+import {
+  nusdtAbi,
+  NovaiFaucetAbi,
+  bonstakeAbi,
+  uniswap,
+  swapNai,
+} from '@/libs/web3/abi/index';
+import { formatNumberWithCommas } from '@/libs/utils';
 
 export const useBaseStore = defineStore('baseStore', {
   state: () => {
     return {
       earlest: {} as Block,
       latest: {} as Block,
+      latestList: [] as any[],
       start: false,
       loading: true,
       recents: [] as Block[],
@@ -26,6 +34,7 @@ export const useBaseStore = defineStore('baseStore', {
         | 'dark',
       connected: true,
       transaction: [] as any[],
+      transactions: [] as any[],
     };
   },
   getters: {
@@ -88,6 +97,16 @@ export const useBaseStore = defineStore('baseStore', {
     },
     getTransaction(): any[] {
       return this.transaction.sort((a, b) => {
+        return Number(b.height) - Number(a.height);
+      });
+    },
+    getTransactions(): any[] {
+      return this.transactions.sort((a, b) => {
+        return Number(b.height) - Number(a.height);
+      });
+    },
+    getLatestList(): any[] {
+      return this.latestList.sort((a, b) => {
         return Number(b.height) - Number(a.height);
       });
     },
@@ -174,6 +193,8 @@ export const useBaseStore = defineStore('baseStore', {
     },
     //添加列表数据
     setTransaction(res: Block) {
+      this.latestList.push(this.latest);
+      let num = this.latestList.length;
       if (res && res.block) {
         let txs = res.block.data.txs;
         txs.forEach((tx: string) => {
@@ -181,19 +202,37 @@ export const useBaseStore = defineStore('baseStore', {
             const raw = fromBase64(tx);
             const hash = hashTx(raw);
             if (hash.match(/^0x.*/)) {
-              get(`/evmos/ethermint/ai/find_evmtx/${hash}`).then((res) => {
+              get(`/evmos/ethermint/ai/find_evmtx/${hash}`).then((row) => {
+                console.log(row, 'resres');
                 this.blockchain.rpc
-                  .getTx(res.cosmostx)
+                  .getTx(row.cosmostx)
                   .then(async (tx: { tx: Tx; tx_response: TxResponse }) => {
-                    let  va = await this.parseErc20Data(tx);
-                    console.log(tx,'tx',decodeTxRaw(raw),'va',va)
+                    let va = await this.parseErc20Data(tx);
+                    let vas = await this.parseErc20Datas(tx);
                     this.transaction.push({
+                      ...res,
                       height: res.block.header.height,
                       hash: hash,
-                      tx_response:tx.tx_response,
+                      tx_response: tx.tx_response,
                       tx: decodeTxRaw(raw),
-                      ...va
+                      ...va,
                     });
+                    this.transactions.push({
+                      ... res,
+                      height: res.block.header.height,
+                      hash: hash,
+                      ...tx,
+                    tx_response: tx.tx_response,
+                      ...vas,
+                    });
+                    console.log(tx.tx_response,'hash',hash,'txs',txs)
+                    this.latestList[num - 1] = {
+                      ...this.latestList[num - 1],
+                      hash: hash,
+                      tx_response: tx.tx_response,
+                      tx: decodeTxRaw(raw),
+                      ...va,
+                    };
                   });
               });
             } else {
@@ -201,28 +240,181 @@ export const useBaseStore = defineStore('baseStore', {
                 .getTx(hash)
                 .then(async (tx: { tx: Tx; tx_response: TxResponse }) => {
                   let va = await this.parseErc20Data(tx);
-                //  console.log(tx,'tx',decodeTxRaw(raw),'decodeTxRaw(raw)',va)
+                  let vas = await this.parseErc20Datas(tx);
+                  console.log(tx, 'resres', decodeTxRaw(raw),hash,'tx.tx_response.txhash',tx.tx_response.txhash);
+                  //  console.log(tx,'tx',decodeTxRaw(raw),'decodeTxRaw(raw)',va)
                   this.transaction.push({
+                    ...res,
                     height: res.block.header.height,
                     hash: hash,
                     tx: decodeTxRaw(raw),
-                    tx_response:tx.tx_response,
-                    ...va
+                    tx_response: tx.tx_response,
+                    ...va,
                   });
+                  this.transactions.push({
+                    ...res,
+                    height: res.block.header.height,
+                    hash: hash,
+                    ...tx,
+                    ...vas,
+                  });
+                    console.log(tx.tx_response,'hash',hash,'txs',txs)
+                  this.latestList[num - 1] = {
+                    ...this.latestList[num - 1],
+                    hash: hash,
+                    tx_response: tx.tx_response,
+                    tx: decodeTxRaw(raw),
+                    ...va,
+                  };
                 });
             }
-           
           }
         });
       }
     },
-    getTxn(tx: { tx: Tx; tx_response: TxResponse }){
+    getTxn(tx: { tx: Tx; tx_response: TxResponse }) {
       let messages: any = tx.tx.body.messages;
       let tx_messages: any = tx.tx_response.tx.body.messages;
       if (messages.length) {
-        
       }
     },
+    //新判断交易
+    async parseErc20Datas(tx: { tx: Tx; tx_response: TxResponse }) {
+      const abi = [
+        'function transfer(address to, uint amount)',
+        'function name() view returns (string)',
+        'function decimals() view returns (uint8)',
+      ];
+
+      const getInterface = (address?: string): Interface => {
+        switch (address) {
+          case addresses.Bonstake:
+            return new Interface(bonstakeAbi);
+          case addresses.NovaiFaucet:
+            return new Interface(NovaiFaucetAbi);
+          case addresses.novaichain:
+            return new Interface(nusdtAbi);
+          //const ifaceNusdt = new Interface(nusdtAbi); / 10 ** 8 // 8位小数
+          case addresses.UniswapV2Router01:
+            return new Interface(uniswap);
+          case addresses.nAI_UniSwap:
+            return new Interface(swapNai);
+          default:
+            return new Interface(abi);
+          //const ifaceUniswap = new Interface(uniswap);
+        }
+      };
+      try {
+        let messages: any = tx.tx.body.messages;
+        const base64Data = fromBase64(messages[0]?.data.data);
+        var hexData = toHex(base64Data);
+        let bus: any = messages[0]?.data.to;
+        let transactionData: any = '';
+        if (bus === addresses.Bonstake) {
+          transactionData = getInterface(bus)?.parseTransaction({
+            data: `0x${hexData}`,
+          });
+
+          return {
+            value: getFormatUnits(transactionData.args[0],6),
+            BonstakeData: true,
+          };
+        }
+
+        if (bus === addresses.NovaiFaucet) {
+          transactionData = getInterface(
+            addresses.NovaiFaucet
+          )?.parseTransaction({
+            data: `0x${hexData}`,
+          });
+          return {
+            value: getFormatUnits(transactionData.args[1]),
+            NovaiFaucetData: true,
+          };
+        } else if (bus === addresses.novaichain) {
+          transactionData = getInterface(bus)?.parseTransaction({
+            data: `0x${hexData}`,
+          });
+        } else if (
+          bus === addresses.UniswapV2Router01 ||
+          bus === addresses.nAI_UniSwap
+        ) {
+          transactionData = getInterface(bus)?.parseTransaction({
+            data: `0x${hexData}`,
+          });
+          let decimalsTo = 'nameTo',
+            nameTo = '',
+            numTo: any = 0;
+          let args = transactionData.args;
+          if (args.length == 5) {
+            decimalsTo = await GetContract(args[2][0]).decimals();
+            nameTo = await GetContract(args[2][0]).name();
+            numTo = getFormatUnits(args[0], decimalsTo).toFixed(6);
+          }
+          let decimalsForm = await GetContract(
+            args[args.length == 5 ? 2 : 1][1]
+          ).decimals();
+          let nameForm = await GetContract(
+            args[args.length == 5 ? 2 : 1][1]
+          ).name();
+          let numform = getFormatUnits(
+            args[args.length == 5 ? 1 : 0],
+            decimalsForm
+          ).toFixed(6);
+          return {
+            numTo: numTo,
+            nameTo: nameTo,
+            numForm: numform,
+            nameForm: nameForm,
+            addressToddressTo: args[args.length == 5 ? 2 : 1][0],
+            addressFrom: args[args.length == 5 ? 2 : 1][1],
+            toAddress: args[args.length == 5 ? 3 : 2],
+            automation: args.length == 5,
+            showSwap: true,
+          };
+        } else {
+          //  GetEventsByTxHash();
+          try {
+            let { data } = await post('/chainFinder/api/GetEventsByTxHash', {
+              TxHash: hexData,
+            });
+            if (
+              data.contractData[0] &&
+              data.contractData[0].eventName == 'ERC1155'
+            ) {
+              return {
+                show1155:true,
+                value: data.contractData[0].data.value,
+                toAddress: data.contractData[0].data.to
+              }
+            }
+          } catch (e) {}
+
+          transactionData = getInterface().parseTransaction({
+            data: `0x${hexData}`,
+          });
+        }
+
+        if (!transactionData) {
+          return {};
+        }
+        // let messages: [any] = props.tx.tx_response.tx.body.messages;
+        let decimals = await GetContract(bus, abi).decimals();
+        let name = await GetContract(bus, abi).name();
+
+        return {
+          showErc20: true,
+          transactionData,
+          tokenName: name,
+          showErc20Name: transactionData.name,
+          value: toReadableAmount(transactionData.args[1], decimals),
+          toAddress: transactionData.args[0],
+        };
+      } catch (error) {
+        console.log('error：', error);
+      }
+    },
+
     //判断是否存在交易
     async parseErc20Data(tx: { tx: Tx; tx_response: TxResponse }) {
       const abi = [
@@ -237,10 +429,10 @@ export const useBaseStore = defineStore('baseStore', {
       const ifaceUniswap = new Interface(uniswap);
       let messages: any = tx.tx.body.messages;
       let tx_messages: any = tx.tx_response.tx.body.messages;
-      let value:any = 0
-      let name = ''
-      let methodName = ''
-      let transactionType = ''
+      let value: any = 0;
+      let name = '';
+      let methodName = '';
+      let transactionType = '';
       try {
         if (messages.length) {
           let bus: any = messages[0]?.data.to;
@@ -248,41 +440,49 @@ export const useBaseStore = defineStore('baseStore', {
           const base64Data = fromBase64(messages[0]?.data.data);
           var hexData = toHex(base64Data);
           let transactionData: any = '';
-         // console.log(bus,'bus',bus === addresses.UniswapV2Router01)
+          // console.log(bus,'bus',bus === addresses.UniswapV2Router01)
           if (bus === addresses.UniswapV2Router01) {
             transactionData = ifaceUniswap.parseTransaction({
               data: `0x${hexData}`,
             });
-            let args = transactionData.args
-            let decimalsTo = 'nameTo', nameTo = '',numTo:any = 0
-            if(args.length == 5){
-              decimalsTo = await GetContract(args[2][0]).decimals()
-              nameTo = await GetContract(args[2][0]).name()
-              
-              nameTo = nameTo.replace("Wrapped ", "")
-              numTo = getFormatUnits(args[0], decimalsTo).toFixed(6)
-      
+            let args = transactionData.args;
+            let decimalsTo = 'nameTo',
+              nameTo = '',
+              numTo: any = 0;
+            if (args.length == 5) {
+              decimalsTo = await GetContract(args[2][0]).decimals();
+              nameTo = await GetContract(args[2][0]).name();
+
+              nameTo = nameTo.replace('Wrapped ', '');
+              numTo = getFormatUnits(args[0], decimalsTo).toFixed(6);
             }
-            let decimalsForm = await GetContract(args[args.length == 5?2:1][1]).decimals()
-            let nameForm = await GetContract(args[args.length == 5?2:1][1]).name()
-            nameForm = nameForm.replace("Wrapped ", "")
-            let numform = getFormatUnits(args[args.length == 5?1:0], decimalsForm).toFixed(6)
-            transactionType = 'uniswap'
-            return{
-              value:value,
-              to:numTo,
-              form:numform,
+            let decimalsForm = await GetContract(
+              args[args.length == 5 ? 2 : 1][1]
+            ).decimals();
+            let nameForm = await GetContract(
+              args[args.length == 5 ? 2 : 1][1]
+            ).name();
+            nameForm = nameForm.replace('Wrapped ', '');
+            let numform = getFormatUnits(
+              args[args.length == 5 ? 1 : 0],
+              decimalsForm
+            ).toFixed(6);
+            transactionType = 'uniswap';
+            return {
+              value: value,
+              to: numTo,
+              form: numform,
               nameTo,
               nameForm,
               automation: args.length == 5,
-              toAddress:args[args.length == 5?2:1][0],
-              formAddress:args[args.length == 5?2:1][1],
-              objValue:tx_messages.length?tx_messages[0].data:{},
-              name:"",
-              methodName:'',
-              transactionType
-            }
-          }else if (bus === addresses.novaichain) {
+              toAddress: args[args.length == 5 ? 2 : 1][0],
+              formAddress: args[args.length == 5 ? 2 : 1][1],
+              objValue: tx_messages.length ? tx_messages[0].data : {},
+              name: '',
+              methodName: '',
+              transactionType,
+            };
+          } else if (bus === addresses.novaichain) {
             transactionData = ifaceNusdt.parseTransaction({
               data: `0x${hexData}`,
             });
@@ -291,26 +491,30 @@ export const useBaseStore = defineStore('baseStore', {
               data: `0x${hexData}`,
             });
           }
-          if(transactionData){
-            methodName = transactionData.name
+          if (transactionData) {
+            methodName = transactionData.name;
             name = await contract.name();
             const decimals = await contract.decimals();
-           // value = getFormatUnits(transactionData.args[1], decimals)
-            value = formatNumberWithCommas(formatUnits(transactionData.args[1], decimals),6,'');
-            transactionType = 'erc20'
+            // value = getFormatUnits(transactionData.args[1], decimals)
+            value = formatNumberWithCommas(
+              formatUnits(transactionData.args[1], decimals),
+              6,
+              ''
+            );
+            transactionType = 'erc20';
           }
         }
       } catch (error) {
         console.log('error：', error);
-      } 
-      
-      return {
-        value:value,
-        objValue:tx_messages.length?tx_messages[0].data:{},
-        name:name,
-        methodName:"",
-        transactionType
       }
+
+      return {
+        value: value,
+        objValue: tx_messages.length ? tx_messages[0].data : {},
+        name: name,
+        methodName: '',
+        transactionType,
+      };
 
       // let bus:string = tx.tx.body.messages[0].data.to
       //;

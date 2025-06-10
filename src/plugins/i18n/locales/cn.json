@@ -19,7 +19,11 @@
     "all_blockchains": "全部区块链",
     "sponsors": "赞助商",
     "links": "链接",
-    "contract":"contract"
+    "contract":"contract",
+    "total_accounts": "账户总数",
+    "total_value_locked":"锁定总价值", 
+    "total_transactions":"交易总数",
+    "total_transfer_volume":"转账总金额" 
   },
   "search": {
     "title":"Novai 区块链浏览器"
