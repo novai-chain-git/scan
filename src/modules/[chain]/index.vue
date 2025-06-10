@@ -190,7 +190,9 @@ const blocksList = computed(() => {
   // });
 });
 const latestList = computed(() => {
-  return base.getLatestList.slice(-8)
+  return base.getLatestList.slice(-8).sort((a, b) => {
+        return Number(a.height) - Number(b.height);
+      })
   // return base.recents.filter( (item, index) => {
   //   if(index < 4) return item
   // });
@@ -430,7 +432,8 @@ getApTokenPrices()
             z-10 rounded-full bg-[#3b3b3b96]
              text-center leading-[27px]">></div>
             <div @scroll="onScroll" ref="scrollContainer" class="w-[100%] overflow-x-auto w-auto whitespace-nowrap md:()   ">
-            <div :class="`w-[48%] md:!w-[22%] ${key == 7?'mr-[0%]':'mr-[7%] '} ${key == 3 ||key ==7?'md:!mr-[0%]':'md:!mr-[4%]'} inline-block`" v-for="(item, key) in latestList" :key="key">
+            <div :class="`w-[48%] md:!w-[22%] ${key == 7?'mr-[0%]':'mr-[7%] '} ${key == 3 ||key ==7?'md:!mr-[0%]':'md:!mr-[4%]'} inline-block`"
+             v-for="(item, key) in latestList" :key="key">
               <RouterLink 
               v-if="item?.block.header?.height"
               class=" text-[#999999] text-sm font-medium text-left"

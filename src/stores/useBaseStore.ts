@@ -107,7 +107,7 @@ export const useBaseStore = defineStore('baseStore', {
     },
     getLatestList(): any[] {
       return this.latestList.sort((a, b) => {
-        return Number(b.height) - Number(a.height);
+        return Number(b.block?.header.height) - Number(a.block?.header.height);
       });
     },
   },
@@ -146,7 +146,7 @@ export const useBaseStore = defineStore('baseStore', {
           (x) => x?.block_id?.hash === this.latest?.block_id?.hash
         ) === -1
       ) {
-        if (!this.start && this.latest?.block?.header.height) {
+        if (this.recents.length == 0 && this.latest?.block?.header.height) {
           this.start = true;
           this.getTxs(this.latest?.block?.header.height);
           // let res:any =
@@ -193,8 +193,8 @@ export const useBaseStore = defineStore('baseStore', {
     },
     //添加列表数据
     setTransaction(res: Block) {
-      this.latestList.push(this.latest);
       let num = this.latestList.length;
+      this.latestList.push(res);
       if (res && res.block) {
         let txs = res.block.data.txs;
         txs.forEach((tx: string) => {
@@ -226,8 +226,8 @@ export const useBaseStore = defineStore('baseStore', {
                       ...vas,
                     });
                     console.log(tx.tx_response,'hash',hash,'txs',txs)
-                    this.latestList[num - 1] = {
-                      ...this.latestList[num - 1],
+                    this.latestList[num] = {
+                      ...this.latestList[num],
                       hash: hash,
                       tx_response: tx.tx_response,
                       tx: decodeTxRaw(raw),
@@ -259,8 +259,8 @@ export const useBaseStore = defineStore('baseStore', {
                     ...vas,
                   });
                     console.log(tx.tx_response,'hash',hash,'txs',txs)
-                  this.latestList[num - 1] = {
-                    ...this.latestList[num - 1],
+                  this.latestList[num] = {
+                    ...this.latestList[num],
                     hash: hash,
                     tx_response: tx.tx_response,
                     tx: decodeTxRaw(raw),
