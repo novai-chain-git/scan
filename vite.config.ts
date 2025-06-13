@@ -17,7 +17,7 @@ export default defineConfig({
   },
   esbuild: {
     // 删除 console debugger
-  //  drop: ['console', 'debugger']
+    drop: ['console', 'debugger']
   },
   
   plugins: [
@@ -96,11 +96,11 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/chainFinder': {
-        //target: 'http://192.168.101.50:18072',
+        target: 'http://192.168.101.33:18072',
         // target: 'http://192.168.101.12:18080',
        //target: 'http://192.168.101.44:8545',
         //  ttarget: 'http://192.168.101.44:1317',
-        target: 'https://scan.novaichain.com/',
+       // target: 'https://scan.novaichain.com/',
         changeOrigin: true,
       }
     },

@@ -36,7 +36,7 @@ export async function getB(url: string) {
   return (await fetch(url, {referrerPolicy: 'origin-when-cross-origin'})).arrayBuffer();
 }
 
-export async function post(url: string, data: any) {
+export async function post(url: string, data: any = {}) {
   const response = await fetch(url, {
     method: 'POST', // *GET, POST, PUT, DELETE, etc.
     // mode: 'cors', // no-cors, *cors, same-origin

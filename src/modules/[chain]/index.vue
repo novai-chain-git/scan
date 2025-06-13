@@ -34,10 +34,9 @@ const format = useFormatter();
 const dialog = useTxDialog();
 const stakingStore = useStakingStore();
 const paramStore = useParamStore();
+const scrollLeft = ref(0)
 
 
-const atStart = ref(true);
-const atEnd = ref(false);
 const scrollContainer = ref<HTMLElement | null>(null)
 const coinInfo = computed(() => {
   return store.coinInfo;
@@ -56,12 +55,10 @@ const scrollToEnd = (type:boolean = false) => {
       })
     }
 }
-function onScroll() {
-   const el = scrollContainer.value;
-  if (!el) return;
+function onScroll(event:Event) {
+  const target = event.target as HTMLElement;
+  scrollLeft.value = target.scrollLeft;
 
-  atStart.value = el.scrollLeft === 0;
-  atEnd.value = el.scrollLeft + el.clientWidth >= el.scrollWidth - 1; // 减1防止误差
 }
 const pricesList = ref<any[]>([])
 
@@ -425,10 +422,10 @@ getApTokenPrices()
           <!-- -->
           <div class="flex-1 px-[24px] py-[20px] min-h-[100px]">
             <div class=" items-center relative">
-            <div @click="scrollToEnd(true)" class="hidden md:!block  w-[24px] h-[24px] translate-y-[50%] absolute top-50% left-[-24px]
+            <div v-if="scrollLeft" @click="scrollToEnd(true)" class="hidden md:!block  w-[24px] h-[24px] translate-y-[50%] absolute top-50% left-[-24px]
              z-10 rounded-full bg-[#3b3b3b96]
              text-center leading-[27px]"><</div>
-            <div @click="scrollToEnd(false)" class="hidden md:!block w-[24px] h-[24px] translate-y-[50%] absolute top-50% right-[-24px] 
+            <div v-if="!scrollLeft" @click="scrollToEnd(false)" class="hidden md:!block w-[24px] h-[24px] translate-y-[50%] absolute top-50% right-[-24px] 
             z-10 rounded-full bg-[#3b3b3b96]
              text-center leading-[27px]">></div>
             <div @scroll="onScroll" ref="scrollContainer" class="w-[100%] overflow-x-auto w-auto whitespace-nowrap md:()   ">
@@ -504,26 +501,26 @@ getApTokenPrices()
     </div>
 
     <div class="grid mt-[10px] lg:!flex-row grid-cols-1 lg:!grid-cols-3 gap-[10px]">
-      <div class="lg:!col-span-2 min-h-[100%]">
+      <div class="lg:!col-span-2">
         <RecentTransaction :chain="props.chain" />
       </div>
      
       <div class="lg:!col-span-1  text-[#ffffff] border border-[#FFFFFF]/[.16]
-      bg-[#131315]/[.8] rounded-[16px]">
+      bg-[#131315]/[.8] rounded-[16px] self-start">
         <div class="border-b border-[#FFFFFF]/[.16]
            md:pl-[24px] md:pt-[16px] md:pb-[13px] 
            pl-[12px] pt-[8px] pb-[8px]
           text-[14px] 
           font-[OrbitronMedium] tracking-[.5px]">7 days of price records</div>
-        <!-- <div id="chart" class="" style="height: 100%; 
-        min-height: 166px max-height: 310px;">
+        <div id="chart" class="" style=" 
+        min-height: 166px ">
           <ApexCharts type="area" height="100%" :options="chartOptions" :series="series"></ApexCharts>
+        </div>
+        <!-- <div style="">
+<div id="chart" style="">
+          <ApexCharts type="area"  :options="chartOptions" :series="series"></ApexCharts>
+        </div>
         </div> -->
-        <div style="height: 100%; min-height: 166px; max-height: 290px;">
-<div id="chart" style="height: 100%;">
-          <ApexCharts type="area" height="100%" :options="chartOptions" :series="series"></ApexCharts>
-        </div>
-        </div>
       </div>
     </div>
 

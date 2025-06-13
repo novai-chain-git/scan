@@ -96,12 +96,12 @@ const switchTimes = () => {
 
 const getTxsInRecents = computed(() => {
   if (base.getLoging) return [];
-  return base.getTransactions.slice(-4);
+  return base.getTransactions.slice(-20);
 });
-const getTxsInRecent = computed(() => {
-  if (base.getLoging) return [];
-  return base.getTransaction.slice(-20);
-});
+// const getTxsInRecent = computed(() => {
+//   if (base.getLoging) return [];
+//   return base.getTransaction.slice(-20);
+// });
 
 // const getForm = (tx) => {
 //   if (props.tx.tx_response && props.tx.tx_response.raw_log) {
@@ -132,7 +132,7 @@ const getTxsInRecent = computed(() => {
     >
       {{ $t('account.recent_transaction') }}
     </div>
-    <div class="min-h-[200px]">
+    <div class="h-[253px] overflow-auto">
       <div>
         <div v-for="(item, index) in getTxsInRecents" :key="index">
           <FormItem :tx="item" :chain="props.chain" :key="index"></FormItem>
