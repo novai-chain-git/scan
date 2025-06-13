@@ -33,9 +33,8 @@ const GetAllERC20TokenStats = () => {
   })
   post(`chainFinder/api/GetAllERC20TokenStats`,{
     "pageNo":1,
-    "pageSize":10
+    "pageSize":20
   }).then((res) => {
-    console.log(res,'GetAllERC20TokenStats')
 
     let { stat } = res.data
     let nums = 0

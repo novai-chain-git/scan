@@ -31,6 +31,7 @@ export const abi: string[] = [
   'function balanceOf(address account) view returns(uint256)',
   'function totalSupply() view returns(uint256)',
   'function owner() view returns (address)',
+  'function symbol() view returns (string)',
 ];
 
 //获取小狐狸

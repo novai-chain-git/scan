@@ -26,7 +26,7 @@ import transaction from '@/components/account/transaction.vue';
 import tokenNrcs from "@/components/account/tokenNrcs.vue"
 
 import novaiIconImg from "@/assets/images/novaiIcon.svg"
-import nAIImg from "@/assets/images/nai.png"
+import nAIIcon from "@/assets/images/nai.png"
 import usdtIcon from "@/assets/images/usdtIcon.png"
 import btcIcon from "@/assets/images/btc.png"
 import wNovaiIcon from "@/assets/images/8913.svg"
@@ -35,7 +35,8 @@ import { computed, ref } from '@vue/reactivity';
 import { onMounted, watch, reactive } from 'vue';
 import { Icon } from '@iconify/vue';
 import { formatNumberWithCommas } from "@/libs/utils"
-//import {  } from 'ethers';
+import { post } from '@/libs';
+import BalanceCommit from "@/components/account/balanceCommit.vue"
 
 import type {
   AuthAccount,
@@ -54,6 +55,7 @@ import Countdown from '@/components/Countdown.vue';
 import { fromBase64, toHex } from '@cosmjs/encoding';
 import tabModule from '@/components/tabModule/index.vue';
 import { useI18n } from 'vue-i18n';
+import popUp from '@/components/popUp/index.vue';
 
 const props = defineProps(['address', 'chain']);
 const { t } = useI18n();
@@ -71,6 +73,8 @@ const unbondingTotal = ref(0);
 const chart = {};
 const limit = ref(20)
 
+
+const popUpType = ref(false);
 // const recentReceived = ref([] as TxResponseErc[]);
 // const recentReceivedLoding = ref(false as Boolean)
 
@@ -94,12 +98,14 @@ const limit = ref(20)
 let erc1155List = [
     'function balanceOf(address account, uint256 id) view returns(uint256)',
   ];
+  
 const balanList = reactive([
+
   {
-    name:"nUSDT",
-    addresses: addresses.novaichain,
-    abi:abi,
-    img: usdtIcon,
+    name:"AINPC",
+    addresses: addresses.nftAddress,
+    abi:erc1155List,
+    img: novaiIconImg,
     num: 0
   },
   {
@@ -109,11 +115,11 @@ const balanList = reactive([
     img: btcIcon,
     num: 0
   },
-  {
-    name:"AINPC",
-    addresses: addresses.nftAddress,
-    abi:erc1155List,
-    img: novaiIconImg,
+    {
+    name:"nUSDT",
+    addresses: addresses.novaichain,
+    abi:abi,
+    img: usdtIcon,
     num: 0
   },
   {
@@ -129,15 +135,32 @@ const balanList = reactive([
     name:"nAI",
     addresses: addresses.nAI,
     abi:abi,
-    img: nAIImg,
+    img: nAIIcon,
     radix: 18,
     num: 0
   },
 ])
+const balanArr = ref<any[]>([])
+const pageNo = ref(1)
+const balanArrNum = ref(0)
+const balanLoading = ref(false)
+const scrollContainer = ref<any>(null)
 onMounted(() => { });
 
 
+function onScroll(event:Event) {
+  if(balanLoading.value == true) return
+  const el = scrollContainer.value;
+  if (!el) return;
 
+  const scrollBottom = el.scrollTop + el.clientHeight;
+  const isBottom = scrollBottom >= el.scrollHeight - 10;
+
+  if (isBottom) {
+    GetAllERC20TokenStats();
+  }
+
+}
 const createInfo = () => {
   // novaiUsdt.value = 0
   // novaiName.value = ''
@@ -147,6 +170,8 @@ const createInfo = () => {
   balanList.map((_,index) =>{
     balanList[index].num = 0
   })
+  
+  balanArr.value = []
   account.value = {} as AuthAccount
   txs.value = [] as TxResponse[]
   rewards.value = {} as DelegatorRewards
@@ -206,15 +231,16 @@ const totalAmountByCategory = computed(() => {
   // });
   // return [sumBal, sumDel, sumRew, sumUn];
 
+  let totalNum = 0
   let sumBal = 0;
   balances.value?.forEach((x) => {
-    sumBal += Number(formatUnits(x.amount, 18));
+    sumBal = Number(formatUnits(x.amount, 18));
+    totalNum = totalNum + sumBal
     //sumBal += Number(format.formatToken(x))
   });
 
 
 
-  let totalNum = sumBal
   const balanListNum = balanList.map(item =>{
     let num = Number(item.num)
     totalNum = totalNum + num
@@ -277,101 +303,79 @@ const totalValue = computed(() => {
 });
 
 //获取Navai链下的 usdt数量
-async function getUsdt(address: string) {
-  // GetContract(addresses.novaichain, abi)
-  //   .balanceOf(address)
-  //   .then((res) => {
-  //     // const number = ;
-  //     novaiUsdt.value = Number(formatUnits(res, 6));
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
-  // GetContract(addresses.novaichain, abi)
-  //   .name()
-  //   .then((res) => {
-  //     novaiName.value = res;
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
+async function getUsdt() {
 
-  // GetContract(addresses.btcAddress, abi)
-  //   .balanceOf(address)
-  //   .then((res) => {
-  //     // const number = ;
-  //     nBtc.value = Number(formatUnits(res, 6));
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
-  // GetContract(addresses.btcAddress, abi)
-  //   .name()
-  //   .then((res) => {
-  //     nBtcName.value = res;
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
-
-  // GetContract(addresses.wNovai, abi)
-  //   .balanceOf(address)
-  //   .then((res) => {
-  //     // const number = ;
-  //     console.log(res, 'res')
-  //     wNovai.value = Number(formatUnits(res, 18));
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
-
-  
-  
-  // GetContract(addresses.nftAddress, erc1155List)
-  //   .balanceOf(address, getParseUnits('1', 0))
-  //   .then((res) => {
-  //     console.log(res, 'res');
-  //     // const number = ;
-  //     nft.value = res.toString();
-  //   })
-  //   .catch((err) => {
-  //     console.log(err, 'err');
-  //   });
-
-    
-  balanList.forEach((item,index) =>{
+  balanList.forEach(async(item,index) =>{
     if(item.name == 'AINPC'){
-      GetContract(item.addresses, item.abi)
-    .balanceOf(address, getParseUnits('1', 0))
-    .then((res) => {
-      // const number = ;
-      balanList[index].num = res.toString();
-    })
-    .catch((err) => {
-      console.log(err, 'err');
-    });
+     let AINPCBalance = await GetContract(item.addresses, item.abi)
+    .balanceOf(props.address, getParseUnits('1', 0))
+    balanList[index].num = AINPCBalance.toString();
     }else if(item.addresses){
-      GetContract(item.addresses, item.abi).balanceOf(address).then(res => {
-       
-        balanList[index].num = getFormatUnits(res, item.radix || 6)
-      }).catch(err => {
-        console.log(err, 'err')
-      })
-
-  //     GetContract(item.addresses, item.abi).name().then((res) => {
-  //       console.log(res,'resNmae')
-  //       balanList[index].name = res
-  // }).catch(err => {
-  //   console.log(err, 'err')
-  // })
+       const decimals = await GetContract(item.addresses).decimals()
+      const symbol = await GetContract(item.addresses).symbol()
+      const balanceOf = await GetContract(item.addresses).balanceOf(props.address)
+      balanList[index].num = getFormatUnits(balanceOf, decimals)
+      balanList[index].radix = decimals
 
     }
   })
+  console.log('indexindexindexindex')
+}
+
+const loadMore = ()=>{
+  if(pageNo.value <= balanArrNum.value && !balanLoading.value){
+    GetAllERC20TokenStats()
+  }
+}
+function GetAllERC20TokenStats() {
+  if(balanLoading.value == true || (pageNo.value > balanArrNum.value && balanArrNum.value !=0)) return
+  balanLoading.value = true
+    post(`/chainFinder/api/GetAllERC20TokenStats`,{
+      "pageNo":pageNo.value,
+      "pageSize":10
+    }).then(async (res) => {
+  
+      let { stat, page } = res.data
+      let nums = 0
+    //  stat.fli
+      stat.forEach(async (item: { ContractAddress: string}) => {
+        //let data = )
+        let type = balanList.some((items)=>items.addresses.toLowerCase() == item.ContractAddress.toLowerCase())
+        if(!type){
+          
+          const decimals = await GetContract(item.ContractAddress).decimals()
+        const name = await GetContract(item.ContractAddress).symbol()
+        const balanceOf = await GetContract(item.ContractAddress).balanceOf(props.address)
+        let num = getFormatUnits(balanceOf, decimals)
+        balanArr.value.push({
+          name:name,
+          addresses:item.ContractAddress,
+          abi:abi,
+          img:'',
+          num:num
+        })
+        }
+        
+      })
+      balanArrNum.value = page
+     
+      if(stat.length == 0 && page == 0){
+ pageNo.value = 0
+      }else{
+ pageNo.value += 1
+      }
+      
+    }).finally(() => {
+      balanLoading.value = false
+    })
 }
 
 function loadAccount(address: string) {
   if (address) {
-    getUsdt(address);
+    getUsdt();
+    GetAllERC20TokenStats()
+    pageNo.value = 1
+  balanArrNum.value = 0
   }
 
   if (isAddress(address)) {
@@ -629,6 +633,52 @@ const percentage = (v: any, k: any) => {
       </div>
     </div>
 
+    
+     <popUp v-model="popUpType" :title="$t('account.all')">
+      <div @scroll="onScroll" ref="scrollContainer" 
+      class="max-h-[70vh] overflow-y-auto md:!max-h-[50vh]">
+        <table class="table text-sm w-full text-[#ffffff]">
+              <thead>
+                <tr class="text-[12px]">
+                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Chain') }}</th>
+                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Token') }}</th>
+                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Amount') }}</th>
+                </tr>
+              </thead>
+              <tbody class="">
+                <tr v-for="(item, index) in balances" :key="index">
+                  <td>{{ item.denom }}</td>
+                  <td class="flex items-center">
+                    <img class="w-[28px] mr-2" src="@/assets/images/novaiIcon.svg"></img>
+                    {{ item.denom }}
+                  </td>
+
+                  <td>{{ format.formatToken(item, true, '0.[000000]') }}</td>
+                </tr>
+                <tr v-for="(item, index) in balanList" :key="index">
+                  <td>{{ item.name }}</td>
+                  <td class="flex items-center">
+                    <img class="w-[28px] mr-2" :src="item.img"></img>
+                    {{ item.name }}
+                  </td>
+
+                  <td>{{ item.num + ' ' + item.name }}</td>
+                </tr>
+                <tr v-for="(item, index) in balanArr" :key="index">
+                  <td>{{ item.name }}</td>
+                  <td class="flex items-center">
+                    <img class="w-[28px] mr-2" :src="item.img"></img>
+                    {{ item.name }}
+                  </td>
+                  <td>{{ item.num + ' ' + item.name }}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="text-center text-[#ffffff]/[.54]" @click="loadMore">
+              {{ pageNo > balanArrNum ? $t('account.no_more_data') : balanLoading? $t('account.loading') : $t('account.load_more')}}
+            </div>
+      </div>
+     </popUp>
     <!-- Assets -->
     <div class="border border-[#FFFFFF]/[.16] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4  mb-4 shadow">
       <div class="flex justify-between">
@@ -657,6 +707,8 @@ const percentage = (v: any, k: any) => {
               >{{ $t('account.btn_transfer') }}</label
             >
           </div> -->
+          <div class="textjb-lv font-[OrbitronMedium]" @click="popUpType = true">{{$t('account.all') }}</div>
+          
       </div>
       <div class=" md:!grid-cols-3 md:grid">
         <div class="md:!col-span-1">
@@ -686,43 +738,6 @@ const percentage = (v: any, k: any) => {
                   </td>
                   <td>{{ format.formatToken(item, true, '0.[000000]') }}</td>
                 </tr>
-                <!-- <tr>
-                  <td>{{ novaiName }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" src="@/assets/images/usdtIcon.png"></img>
-                    {{ novaiName }}
-                  </td>
-                  <td>{{ percentage(novaiUsdt, totalAmountByCategory.totalNum) }}%</td>
-                  <td>{{ novaiUsdt + ' ' + novaiName }}</td>
-                </tr>
-                <tr>
-                  <td>{{ nBtcName }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" src="@/assets/images/btc.png"></img>
-                    {{ nBtcName }}
-                  </td>
-                  <td>{{ percentage(nBtc, totalAmountByCategory.totalNum) }}%</td>
-                  <td>{{ nBtc + ' ' + nBtcName }}</td>
-                </tr>
-                <tr>
-                  <td>{{ nftName }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" src="@/assets/images/novaiIcon.svg"></img>
-                    {{ nftName }}
-                  </td>
-                  <td>{{ percentage(nft, totalAmountByCategory.totalNum) }}%</td>
-                  <td>{{ nft + ' ' + nftName }}</td>
-                </tr>
-                <tr>
-                  <td>{{ wNovaiName }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" src="@/assets/images/8913.svg"></img>
-                    {{ wNovaiName }}
-                  </td>
-                  <td>{{ percentage(wNovai, totalAmountByCategory.totalNum) }}%</td>
-                  <td>{{ wNovai + ' ' + wNovaiName }}</td>
-                </tr> -->
-
                 <tr v-for="(item, index) in balanList" :key="index">
                   <td>{{ item.name }}</td>
                   <td class="flex items-center">
