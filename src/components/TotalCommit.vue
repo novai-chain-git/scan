@@ -17,7 +17,7 @@ const blockchain = useBlockchain();
 const totalTransferVolume = ref(0)
 
 const getTotal = () => {
-  get(`cosmos/auth/v1beta1/accounts`).then((res) => {
+  get(`/cosmos/auth/v1beta1/accounts`).then((res) => {
     console.log(res)
     let { pagination } = res
     console.log(res)
@@ -27,11 +27,11 @@ const getTotal = () => {
 
 getTotal()
 const GetAllERC20TokenStats = () => {
-    post(`chainFinder/api/GetTotalEventCount`).then((res) => {
+    post(`/chainFinder/api/GetTotalEventCount`).then((res) => {
     console.log(res,'GetTotalEventCount')
     totalTransactions.value = res.data
   })
-  post(`chainFinder/api/GetAllERC20TokenStats`,{
+  post(`/chainFinder/api/GetAllERC20TokenStats`,{
     "pageNo":1,
     "pageSize":20
   }).then((res) => {
