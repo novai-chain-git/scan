@@ -95,7 +95,8 @@ const getAddressInfo = function(address: string){
               :address="value.contractData.value.data.path[0]"
               :amount="
                 value.contractData.value.data.amount0In ||
-                value.contractData.value.data.amount1In
+                value.contractData.value.data.amount1In ||
+                value.contractData.value.data.amountIn
               "
             >
             </Decimals>
@@ -104,7 +105,8 @@ const getAddressInfo = function(address: string){
               :address="value.contractData.value.data.path[1]"
               :amount="
                 value.contractData.value.data.amount0Out ||
-                value.contractData.value.data.amount1Out
+                value.contractData.value.data.amount1Out||
+                value.contractData.value.data.amountOutMin
               "
             ></Decimals>
           </template>
