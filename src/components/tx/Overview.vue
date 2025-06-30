@@ -3,7 +3,7 @@ import { reactive, computed, ref } from 'vue';
 import { useFormatter } from '@/stores';
 import { Interface, JsonRpcProvider, Contract, formatUnits } from 'ethers';
 import { toReadableAmount } from '@/libs/utils';
-import { addresses, GetContract, getFormatUnits } from '@/libs/web3/index';
+import { addresses, GetContract, getFormatUnits,provider as getProvider } from '@/libs/web3/index';
 import {
   nusdtAbi,
   NovaiFaucetAbi,
@@ -12,6 +12,7 @@ import {
   swapNai,
 } from '@/libs/web3/abi/index';
 import { post } from '@/libs';
+import { useRouter } from 'vue-router';
 
 import dayjs from 'dayjs';
 import {
@@ -22,6 +23,7 @@ import {
   fromHex,
 } from '@cosmjs/encoding';
 
+const vueRouters = useRouter();
 const props = defineProps(['tx', 'hash', 'chain']);
 const format = useFormatter();
 const transfersType = ref('1');
@@ -350,6 +352,19 @@ async function getSwapInfo(args: any) {
   }
 }
 parseErc20Data();
+
+const jump = (address: any) => {
+  getProvider()
+    .getCode(address)
+    .then((code: any) => {
+      if (code.length > 2) {
+        vueRouters.push({ path: `/${props.chain}/token/${address}` });
+      } else {
+        vueRouters.push({ path: `/${props.chain}/account/${address}` });
+      }
+    });
+};
+
 </script>
 <template>
   <div class="">
@@ -434,10 +449,13 @@ parseErc20Data();
                         }}</RouterLink> </span
                       ><br />
                       {{ $t('tx.To') }}：
-                      <span class="textjb-lv">
-                        <RouterLink :to="`/${chain}/account/${transData.to}`">{{
+                      <span class="textjb-lv cursor-pointer" @click="jump(transData.to)">{{
                           transData.to 
-                        }}</RouterLink> </span
+                        }}
+                        <!-- <RouterLink :to="`/${chain}/account/${transData.to}`">{{
+                          transData.to 
+                        }}</RouterLink>  -->
+                        </span
                       ><br />
                       <span class="">For</span> {{ transData.value }}
                       {{ transData.tokenName }}

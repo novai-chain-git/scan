@@ -100,7 +100,14 @@ function callback() {
   if(errTypre.value){
   page.value = page.value + 1
   }
-  getPageList()
+
+  //   if (footerList.value.length == 0 || recentReceivedLoding.value) return
+  
+  // recentReceivedLoding.value = true
+  // // if(errTypre.value){
+  // // page.value = page.value + 1
+  // // }
+   getPageList()
 }
 // 
 function errLoding(){
@@ -139,19 +146,20 @@ async function getPageList() {
     })
     console.log(data, 'GetEventsByAddress')
     total.value = data.pageNumber
-    let arr = data.event
-    contractData.value = [...contractData.value, ...data.contractData]
+    let arr = data.event || []
+    contractData.value = [...contractData.value, ...(data.contractData || [])]
     arr = arr.map((item: TxResponseErc) => {
       return {
         ...item,
-        contractData: getToken(item,data.contractData)
+        contractData: getToken(item,(data.contractData || []))
       }
 
     }).filter((item: TxResponseErc) => item.contractData && item.contractData?.type)
     recentReceived.value = [...recentReceived.value, ...arr]
-
+   
     recentReceivedLoding.value = false
-//  if (recentReceived.value.length < 50) return callback()
+    console.log(recentReceived.value.length,'recentReceived.value.length')
+  if (recentReceived.value.length < 50) return callback()
   } catch (err) {
     recentReceivedLoding.value = false
     errTypre.value = false

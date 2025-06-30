@@ -172,8 +172,8 @@ async function getPageList() {
       pageSize: props.limit,
     });
     total.value = data.pageNumber;
-    let arr = data.event;
-    contractData.value = [...contractData.value, ...data.contractData2];
+    let arr = data.event || [];
+    contractData.value = [...contractData.value, ...(data.contractData2 || [])];
     arr = arr.map((item: TxResponseErc) => {
       return {
         ...item,
