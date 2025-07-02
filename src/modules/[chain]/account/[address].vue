@@ -73,8 +73,9 @@ const unbondingTotal = ref(0);
 const chart = {};
 const limit = ref(20)
 
+const openType = ref(false)
 
-const popUpType = ref(false);
+
 // const recentReceived = ref([] as TxResponseErc[]);
 // const recentReceivedLoding = ref(false as Boolean)
 
@@ -96,45 +97,45 @@ const popUpType = ref(false);
 
 
 let erc1155List = [
-    'function balanceOf(address account, uint256 id) view returns(uint256)',
-  ];
-  
+  'function balanceOf(address account, uint256 id) view returns(uint256)',
+];
+
 const balanList = reactive([
 
   {
-    name:"AINPC",
+    name: "AINPC",
     addresses: addresses.nftAddress,
-    abi:erc1155List,
+    abi: erc1155List,
     img: novaiIconImg,
     num: 0
   },
   {
-    name:"nBTC",
+    name: "nBTC",
     addresses: addresses.btcAddress,
-    abi:abi,
+    abi: abi,
     img: btcIcon,
     num: 0
   },
-    {
-    name:"nUSDT",
+  {
+    name: "nUSDT",
     addresses: addresses.novaichain,
-    abi:abi,
+    abi: abi,
     img: usdtIcon,
     num: 0
   },
   {
-    name:"wNOVAI",
+    name: "wNOVAI",
     addresses: addresses.wNovai,
-    abi:abi,
+    abi: abi,
     img: wNovaiIcon,
     radix: 18,
     num: 0
   },
-  
+
   {
-    name:"nAI",
+    name: "nAI",
     addresses: addresses.nAI,
-    abi:abi,
+    abi: abi,
     img: nAIIcon,
     radix: 18,
     num: 0
@@ -148,8 +149,8 @@ const scrollContainer = ref<any>(null)
 onMounted(() => { });
 
 
-function onScroll(event:Event) {
-  if(balanLoading.value == true) return
+function onScroll(event: Event) {
+  if (balanLoading.value == true) return
   const el = scrollContainer.value;
   if (!el) return;
 
@@ -167,10 +168,10 @@ const createInfo = () => {
   // nBtc.value = 0
   // nBtcName.value = ''
   // wNovai.value = 0
-  balanList.map((_,index) =>{
+  balanList.map((_, index) => {
     balanList[index].num = 0
   })
-  
+
   balanArr.value = []
   account.value = {} as AuthAccount
   txs.value = [] as TxResponse[]
@@ -241,24 +242,30 @@ const totalAmountByCategory = computed(() => {
 
 
 
-  const balanListNum = balanList.map(item =>{
+  const balanListNum = balanList.map(item => {
     let num = Number(item.num)
     totalNum = totalNum + num
     return num
   })
-  console.log(balanListNum,'balanListNum')
- // const totalNum = sumBal + novaiNum + nBtcNum + nftNum + wNovaiNum
+  balanArr.value?.forEach((item) => {
+    let num = Number(item.num)
+    totalNum = totalNum + num
+    //sumBal += Number(format.formatToken(x))
+  });
+
+  console.log(balanListNum, 'balanListNum')
+  // const totalNum = sumBal + novaiNum + nBtcNum + nftNum + wNovaiNum
   return {
-    
+
     fanChartData: [sumBal, ...balanListNum],
     totalNum,
-    
+
   };
 });
 // const labels = computed(() => ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]);
 const labels = computed(() => {
   return ['NOVAI', ...balanList.map(item => item.name)]
-//  return ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]
+  //  return ['NOVAI', novaiName.value, nBtcName.value, nftName.value, wNovaiName.value]
 });
 // const labels = ['Balance', 'Delegation', 'Reward', 'Unbonding'];
 
@@ -305,13 +312,13 @@ const totalValue = computed(() => {
 //获取Navai链下的 usdt数量
 async function getUsdt() {
 
-  balanList.forEach(async(item,index) =>{
-    if(item.name == 'AINPC'){
-     let AINPCBalance = await GetContract(item.addresses, item.abi)
-    .balanceOf(props.address, getParseUnits('1', 0))
-    balanList[index].num = AINPCBalance.toString();
-    }else if(item.addresses){
-       const decimals = await GetContract(item.addresses).decimals()
+  balanList.forEach(async (item, index) => {
+    if (item.name == 'AINPC') {
+      let AINPCBalance = await GetContract(item.addresses, item.abi)
+        .balanceOf(props.address, getParseUnits('1', 0))
+      balanList[index].num = AINPCBalance.toString();
+    } else if (item.addresses) {
+      const decimals = await GetContract(item.addresses).decimals()
       const symbol = await GetContract(item.addresses).symbol()
       const balanceOf = await GetContract(item.addresses).balanceOf(props.address)
       balanList[index].num = getFormatUnits(balanceOf, decimals)
@@ -322,60 +329,68 @@ async function getUsdt() {
   console.log('indexindexindexindex')
 }
 
-const loadMore = ()=>{
-  if(pageNo.value <= balanArrNum.value && !balanLoading.value){
+const handleScroll = (event: Event) => {
+  const el = event.target as HTMLDivElement;
+  // console.log(el.scrollTop,'el')
+  if ((openType.value == el.scrollTop + el.clientHeight >= el.scrollHeight) && openType.value) {
+    loadMore();
+  }
+};
+const loadMore = () => {
+  if ((pageNo.value <= balanArrNum.value && !balanLoading.value) ||  !openType.value) {
     GetAllERC20TokenStats()
+  openType.value = true
   }
 }
 function GetAllERC20TokenStats() {
-  if(balanLoading.value == true || (pageNo.value > balanArrNum.value && balanArrNum.value !=0)) return
+  if (balanLoading.value == true || (pageNo.value > balanArrNum.value && balanArrNum.value != 0)) return
   balanLoading.value = true
-    post(`/chainFinder/api/GetAllERC20TokenStats`,{
-      "pageNo":pageNo.value,
-      "pageSize":10
-    }).then(async (res) => {
-  
-      let { stat, page } = res.data
-      let nums = 0
+  post(`/chainFinder/api/GetAllERC20TokenStats`, {
+    "pageNo": pageNo.value,
+    "pageSize": 10
+  }).then(async (res) => {
+
+    let { stat, page } = res.data
+    let nums = 0
     //  stat.fli
-      stat.forEach(async (item: { ContractAddress: string}) => {
-        //let data = )
-        let type = balanList.some((items)=>items.addresses.toLowerCase() == item.ContractAddress.toLowerCase())
-        if(!type){
-          
-          const decimals = await GetContract(item.ContractAddress).decimals()
+    stat.forEach(async (item: { ContractAddress: string }) => {
+      //let data = )
+      let type = balanList.some((items) => items.addresses.toLowerCase() == item.ContractAddress.toLowerCase())
+      if (!type) {
+
+        const decimals = await GetContract(item.ContractAddress).decimals()
         const name = await GetContract(item.ContractAddress).symbol()
         const balanceOf = await GetContract(item.ContractAddress).balanceOf(props.address)
         let num = getFormatUnits(balanceOf, decimals)
         balanArr.value.push({
-          name:name,
-          addresses:item.ContractAddress,
-          abi:abi,
-          img:'',
-          num:num
+          name: name,
+          addresses: item.ContractAddress,
+          abi: abi,
+          img: '',
+          num: num
         })
-        }
-        
-      })
-      balanArrNum.value = page
-     
-      if(stat.length == 0 && page == 0){
- pageNo.value = 0
-      }else{
- pageNo.value += 1
       }
-      
-    }).finally(() => {
-      balanLoading.value = false
+
     })
+    balanArrNum.value = page
+
+    // if (stat.length == 0 && page == 0) {
+    //   pageNo.value = 0
+    // } else {
+    //   pageNo.value += 1
+    // }
+    pageNo.value += 1
+
+  }).finally(() => {
+    balanLoading.value = false
+  })
 }
 
 function loadAccount(address: string) {
   if (address) {
     getUsdt();
-    GetAllERC20TokenStats()
     pageNo.value = 1
-  balanArrNum.value = 0
+    balanArrNum.value = 0
   }
 
   if (isAddress(address)) {
@@ -602,7 +617,7 @@ const percentage = (v: any, k: any) => {
   if (typeof k != 'number') {
     k = parseFloat(k)
   }
-  return parseFloat((v / k).toFixed(4)) * 100
+  return parseFloat((v / k * 100).toFixed(4))
 }
 
 
@@ -633,52 +648,7 @@ const percentage = (v: any, k: any) => {
       </div>
     </div>
 
-    
-     <popUp v-model="popUpType" :title="$t('account.all')">
-      <div @scroll="onScroll" ref="scrollContainer" 
-      class="max-h-[70vh] overflow-y-auto md:!max-h-[50vh]">
-        <table class="table text-sm w-full text-[#ffffff]">
-              <thead>
-                <tr class="text-[12px]">
-                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Chain') }}</th>
-                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Token') }}</th>
-                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Amount') }}</th>
-                </tr>
-              </thead>
-              <tbody class="">
-                <tr v-for="(item, index) in balances" :key="index">
-                  <td>{{ item.denom }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" src="@/assets/images/novaiIcon.svg"></img>
-                    {{ item.denom }}
-                  </td>
 
-                  <td>{{ format.formatToken(item, true, '0.[000000]') }}</td>
-                </tr>
-                <tr v-for="(item, index) in balanList" :key="index">
-                  <td>{{ item.name }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" :src="item.img"></img>
-                    {{ item.name }}
-                  </td>
-
-                  <td>{{ item.num + ' ' + item.name }}</td>
-                </tr>
-                <tr v-for="(item, index) in balanArr" :key="index">
-                  <td>{{ item.name }}</td>
-                  <td class="flex items-center">
-                    <img class="w-[28px] mr-2" :src="item.img"></img>
-                    {{ item.name }}
-                  </td>
-                  <td>{{ item.num + ' ' + item.name }}</td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="text-center text-[#ffffff]/[.54]" @click="loadMore">
-              {{ pageNo > balanArrNum ? $t('account.no_more_data') : balanLoading? $t('account.loading') : $t('account.load_more')}}
-            </div>
-      </div>
-     </popUp>
     <!-- Assets -->
     <div class="border border-[#FFFFFF]/[.16] bg-[#131315]/[.8] rounded-[16px] px-4 pt-3 pb-4  mb-4 shadow">
       <div class="flex justify-between">
@@ -707,19 +677,18 @@ const percentage = (v: any, k: any) => {
               >{{ $t('account.btn_transfer') }}</label
             >
           </div> -->
-          <div class="textjb-lv font-[OrbitronMedium]" @click="popUpType = true">{{$t('account.all') }}</div>
-          
+
       </div>
       <div class=" md:!grid-cols-3 md:grid">
         <div class="md:!col-span-1">
           <DonutChart :series="totalAmountByCategory.fanChartData" :labels="labels" />
         </div>
         <div class="mt-4 md:!col-span-2 md:!mt-0 md:!ml-4">
-          <div class="overflow-x-auto">
+          <div :class="`${openType?'overflow-auto max-h-[381px]':'overflow-x-auto'}` " @scroll="handleScroll">
             <table class="table text-sm w-full">
               <thead>
                 <tr class="text-[12px]">
-                  <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Chain') }}</th>
+                  <!-- <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Chain') }}</th> -->
                   <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Token') }}</th>
                   <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Portfolio') }}</th>
                   <th class="py-3 text-[#ffffff]/[.54] font-[400]">{{ $t('account.Amount') }}</th>
@@ -727,7 +696,7 @@ const percentage = (v: any, k: any) => {
               </thead>
               <tbody>
                 <tr v-for="(item, index) in balances" :key="index">
-                  <td>{{ item.denom }}</td>
+                  <!-- <td>{{ item.denom }}</td> -->
                   <td class="flex items-center">
                     <img class="w-[28px] mr-2" src="@/assets/images/novaiIcon.svg"></img>
                     {{ item.denom }}
@@ -739,10 +708,25 @@ const percentage = (v: any, k: any) => {
                   <td>{{ format.formatToken(item, true, '0.[000000]') }}</td>
                 </tr>
                 <tr v-for="(item, index) in balanList" :key="index">
-                  <td>{{ item.name }}</td>
+                  <!-- <td>{{ item.name }}</td> -->
                   <td class="flex items-center">
                     <img class="w-[28px] mr-2" :src="item.img"></img>
-                    {{ item.name }}
+                    <RouterLink :to="`/${chain}/token/${item.addresses}`" class="textjb-lv dark:invert">{{ item.name }}
+                </RouterLink>
+                  </td>
+
+                  <td>
+                    {{ percentage(item.num, totalAmountByCategory.totalNum) }}%
+                  </td>
+                  <td>{{ item.num + ' ' + item.name }}</td>
+                </tr>
+                <tr v-for="(item, index) in balanArr" :key="index">
+                  <!-- <td>{{ item.name }}</td> -->
+                  <td class="flex items-center">
+                    <img class="w-[28px] mr-2" :src="item.img"></img>
+                    
+                     <RouterLink :to="`/${chain}/token/${item.addresses}`" class="textjb-lv dark:invert">{{ item.name }}
+                </RouterLink>
                   </td>
 
                   <td>
@@ -752,6 +736,16 @@ const percentage = (v: any, k: any) => {
                 </tr>
               </tbody>
             </table>
+            <div class="text-center text-[#ffffff]/[.54]" @click="loadMore">
+              
+              <template v-if="openType">
+                {{ balanLoading || pageNo <= balanArrNum  ? $t('account.loading') :  $t('account.no_more_data') }}
+              </template>
+              <template v-else>
+               <span class="text-[#ffffff] py-[5px] cursor-pointer">{{ $t('MORE') }}</span>
+                
+              </template>
+            </div>
           </div>
           <!-- list-->
 
